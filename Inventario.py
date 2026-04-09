@@ -1,63 +1,47 @@
-matriz_inventario = []
-SLOTS_INVENTARIO = 30
-COLUMNAS = 5 # [id_item , nombre, tipo, cantidad, equipado] 
-ITEM_VACIO = [0,"","",0,False] # [entero, string, string, entero, booleano]
+INVENTARIO_MAXIMO = 30
+ITEM_KEYS = {'id_item':0,'nombre':'','tipo':'','cantidad':0,'equipado':False}
 
+# COLUMNAS = 5 # [id_item , nombre, tipo, cantidad, equipado] 
 
 # tipos de items tentativos: consumible, equipable, intercambiable, clave, usable
-# id_item == 0 equivale a decir que el slot esta vacio
 
 def crear_inventario():
     '''
-    Objetivo: llenar matriz inventario vacia con slots fijos.
-    Salida: none
+    Objetivo: crear inventario.
+    Salida: lista vacia
     '''
-    matriz_inventario.clear()
-    for i in range(SLOTS_INVENTARIO):
-        item = ITEM_VACIO.copy()
-        matriz_inventario.append(item)
+    return []
 
-def buscar_primer_slot_vacio():
+def agregar_item(item,inventario):
     '''
-    Objetivo: Encontrar primer lugar vacio en la matriz
-    Salida: numero entero (el indice). devuelve -1 si no hay slots vacios
-    '''
-    for i in range(SLOTS_INVENTARIO):
-        if matriz_inventario[i][0] == 0:
-            return i
-    return -1
-
-def agregar_item(item):
-    '''
-    Entrada: lista
+    Entrada: diccionario
     Objetivo: Agregar item al inventario
     Salida: none
     '''
-    if len(item) != COLUMNAS:
-        return f'ERROR, el largo del item a agregar ({len(item)}) no coincide con la cantidad de columnas esperadas {COLUMNAS} '
-    copia = item.copy()
-    indice = buscar_primer_slot_vacio()
-    if indice == -1:
-        return 'Inventario LLeno'
-    matriz_inventario[indice] = copia
+    if item.keys() != ITEM_KEYS.keys():
+        return print('Error, el objeto ingresado no tiene las keys de un item') # TODO: reemplazar por manejo de errores
+    i = busqueda_item_por_id(item['id_item'], inventario)
 
-def vaciar_slot(indice):
-    '''
-    Entrada: Numero entero (indice a vaciar) 
-    Objetivo: Vaciar slot en la mattriz
-    '''
-    matriz_inventario[indice] = ITEM_VACIO.copy()
+    if i != -1:
+        inventario[i]['cantidad'] += 1
+    else:
+        if len(inventario) >= INVENTARIO_MAXIMO:
+            return print('Inventario lleno') # TODO: reemplazar por manejo de errores
+        inventario.append(item.copy())
 
-def busqueda_item_por_id(item_id):
+    
+    
+
+def busqueda_item_por_id(id_item, inventario):
     '''
     Entrada: entero (id del item a buscar)
     Objetivo: Buscar items secuencialmente segun ID
     Salida: Numero entero (indice del slot donde esta el item buscado o -1 si el item no esta presente)
     '''
     i = 0
-    while i < SLOTS_INVENTARIO and matriz_inventario[i][0] != item_id:
+    while i < len(inventario) and inventario[i]['id_item'] != id_item:
         i+=1
-    if i < SLOTS_INVENTARIO:
+    if i < len(inventario):
         return i
     else:
         return -1
