@@ -77,3 +77,11 @@ def manejar_equipado_item(id_item, inventario): # TODO agregar casos donde el su
         return print('No hay stock del item')
     inventario[i]['equipado'] = not inventario[i]['equipado']
     return True
+
+def exportar_items_equipados(inventario):
+    '''
+    Entrada: lista (inventario)
+    Objetivo: exportar una lista con los items equipados
+    Salida: lista de items
+    '''
+    return [item for item in inventario if item['equipado']]
