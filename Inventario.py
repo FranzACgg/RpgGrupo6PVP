@@ -156,3 +156,41 @@ def centrar_texto(cadena):
     '''
     return cadena.center(ANCHO_UI)
 
+'''    if cursor < desvio_cursor:
+        desvio_cursor = cursor
+    else:
+        desvio_cursor += ITEMS_POR_PAGINA
+'''
+
+def mostrar_inventario(inventario,cursor,desvio_cursor):
+    '''
+    Entrada: lista(inventario), seleccion: entero (donde esta parado el cursor), desvio_cursor: entero (donde arranca a mostrarse el menu)
+    Objetivo: mostrar el inventario
+    '''
+    print(BORDE_HORIZONTAL_DOBLE)
+    print(centrar_texto(f'INVENTARIO ({len(inventario)}/{INVENTARIO_MAXIMO})'))
+    print(BORDE_HORIZONTAL_DOBLE)
+
+    if len(inventario) == 0:
+        print(' ' * ANCHO_UI)
+        print(BORDE_HORIZONTAL_SIMPLE)
+        return
+
+    if desvio_cursor + ITEMS_POR_PAGINA < len(inventario):
+        rango = desvio_cursor + ITEMS_POR_PAGINA
+    else:
+        rango = len(inventario)
+    for i in range(desvio_cursor, rango):
+        cadena = ''
+        if i == cursor:
+            cadena += '> ' + inventario[i]['nombre'] + ' ' + str(inventario[i]['cantidad'])
+        else:
+            cadena += ' ' + inventario[i]['nombre'] + ' ' + str(inventario[i]['cantidad'])
+        if inventario[i]['equipado']:
+            cadena += ' [E]'
+        print(cadena)
+    
+    print(BORDE_HORIZONTAL_SIMPLE)
+
+
+
