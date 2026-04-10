@@ -1,10 +1,26 @@
+import os
+import msvcrt
+
 INVENTARIO_MAXIMO = 30
 ITEM_KEYS = {'id_item':0,'nombre':'','tipo':'','cantidad':0,'equipado':False}
+
+# Tamaño del UI del inventario
+ANCHO_UI = 45
+
+# Bordes del Inventario
+BORDE_HORIZONTAL_SIMPLE = '─' * ANCHO_UI
+BORDE_HORIZONTAL_DOBLE = '═' * ANCHO_UI
+
+# cuantos items mostrar por pagina
+ITEMS_POR_PAGINA = 8
+
 
 # KEYS = 5 # [id_item , nombre, tipo, cantidad, equipado] 
 
 # tipos de items tentativos: consumible, equipable, intercambiable, clave, usable
 
+
+# Logica del Inventario
 
 def crear_inventario():
     '''
@@ -112,4 +128,31 @@ def descartar_item(id_item, inventario):
     else:
         inventario.pop(i)
         return True
+    
+# UI del Inventario
+
+def limpiar_consola():
+    '''
+    Objetivo: limpiar consola según el sistema operativo
+    nt = Windows, cls es el comando para limpiar la consola en Windows
+    clear es el comando para limpiar la consola en Unix/Linux/Mac
+    '''
+    os.system('cls' if os.name == 'nt' else 'clear')
+
+# funcion para obtener una tecla sin necesidad de presionar enter, usando msvcrt (solo funciona en Windows)
+def obtener_tecla():
+    '''
+    Objetivo: obtener una tecla sin necesidad de presionar enter (solo Windows)
+    msvcrt.getch() pausa el programa haste que el usuario presione usa tecla, luego devuelve un byte, este se decodifica a string en formato utf-8 y se convierte a minuscula para facilitar la comparación
+    Salida: string (la tecla que se presionó)
+    '''
+    return msvcrt.getch().decode('utf-8').lower()
+
+def centrar_texto(cadena):
+    '''
+    Entrada: string 
+    Objetivo: centrar texto en el ancho del UI
+    Salida: string
+    '''
+    return cadena.center(ANCHO_UI)
 
