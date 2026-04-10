@@ -5,6 +5,7 @@ ITEM_KEYS = {'id_item':0,'nombre':'','tipo':'','cantidad':0,'equipado':False}
 
 # tipos de items tentativos: consumible, equipable, intercambiable, clave, usable
 
+
 def crear_inventario():
     '''
     Objetivo: crear inventario.
@@ -85,3 +86,30 @@ def exportar_items_equipados(inventario):
     Salida: lista de items
     '''
     return [item for item in inventario if item['equipado']]
+
+def descartar_item(id_item, inventario):
+    '''
+    Entrada: entero (id), lista (inventario)
+    Objetivo: descartar un item del inventario
+    Salida: True/False s/exito de la operacion
+    '''
+    i = busqueda_item_por_id(id_item, inventario)
+    if i == -1:
+        print('item no se encuentra en el inventario')
+        return False
+    if inventario[i]['tipo'] == 'clave':
+        print('Error, no se puede descartar items clave')
+        return False
+    if inventario[i]['equipado']:
+        print('Error, no se puede descartar items equipados')
+        return False
+    if inventario[i]['cantidad'] <= 0:
+        print('Error, no hay stock del item')
+        return False
+    if inventario[i]['cantidad'] > 1: #TODO agregar funcionalidad para que el usuario pueda elegir cuantos items descarta
+        inventario[i]['cantidad'] -= 1
+        return True
+    else:
+        inventario.pop(i)
+        return True
+
