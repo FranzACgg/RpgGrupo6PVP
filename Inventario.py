@@ -73,20 +73,21 @@ def usar_item(id_item, inventario):
         id_item: Id del item a usar
         inventario: Lista con todos los items en el inventario
     Objetivo: Manejar el uso de items
-    Salida: True o none. Modifica el inventario original que toma la funcion
+    Salida: Diccionario del item que se uso o none si hubo un error. Modifica el inventario original que toma la funcion
     '''
     i = busqueda_item_por_id(id_item, inventario)
     if i == -1:
         return print('item no se encuentra en el inventario')
-    if inventario[i]['tipo'] != 'consumible':
+    item = inventario[i]
+    if item['tipo'] != 'consumible':
         return print('El item no es consumible')
-    if inventario[i]['cantidad'] <= 0:
+    if item['cantidad'] <= 0:
         return print('No hay stock del item')
-    elif inventario[i]['cantidad'] == 1:
+    elif item['cantidad'] == 1:
         inventario.pop(i)
     else:
-        inventario[i]['cantidad'] -= 1
-    return True
+        item['cantidad'] -= 1
+    return item
     
 def manejar_equipado_item(id_item, inventario): # TODO agregar casos donde el subtipo de item ya esta equipado
     '''
@@ -95,17 +96,18 @@ def manejar_equipado_item(id_item, inventario): # TODO agregar casos donde el su
         id_item: Id del item a equipar/desequipar
         inventario: Lista con todos los items en el inventario
     Objetivo: equipar/desquipar items
-    Salida: True o none. Modifica el inventario original que toma la funcion
+    Salida: Diccionario con el item que se equipo / desquipo o none si hubo un error. Modifica el inventario original que toma la funcion
     '''
     i = busqueda_item_por_id(id_item, inventario)
     if i == -1:
         return print('item no se encuentra en el inventario')
-    if inventario[i]['tipo'] != 'equipable':
+    item = inventario[i]
+    if item['tipo'] != 'equipable':
         return print('El item no es equipable')
-    if inventario[i]['cantidad'] <= 0:
+    if item['cantidad'] <= 0:
         return print('No hay stock del item')
-    inventario[i]['equipado'] = not inventario[i]['equipado']
-    return True
+    item['equipado'] = not item['equipado']
+    return item
 
 def exportar_items_equipados(inventario):
     '''
@@ -299,3 +301,4 @@ def manejar_inventario(inventario):
             desvio_cursor = cursor
         elif cursor >= desvio_cursor + ITEMS_POR_PAGINA:
             desvio_cursor += 1
+
