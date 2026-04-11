@@ -175,11 +175,10 @@ def mostrar_inventario(inventario,cursor,desvio_cursor):
     else:
         rango = len(inventario)
     for i in range(desvio_cursor, rango):
-        cadena = ''
-        if i == cursor:
-            cadena += '> ' + inventario[i]['nombre'] + ' ' + str(inventario[i]['cantidad'])
-        else:
-            cadena += ' ' + inventario[i]['nombre'] + ' ' + str(inventario[i]['cantidad'])
+        puntero = ' ' 
+        if i == cursor: 
+            puntero = '> '
+        cadena = puntero + inventario[i]['nombre'] + ' ' + str(inventario[i]['cantidad'])
         if inventario[i]['equipado']:
             cadena += ' [E]'
         print(cadena)
@@ -217,7 +216,9 @@ def mostrar_controles(inventario, cursor):
             cadena += '[E] Desequipar '
         else:
             cadena += '[E] Equipar '
-    print(cadena + '[T] tirar ')
+    if item['tipo'] != 'clave' and not item['equipado']:
+        cadena += '[T] Tirar '
+    print(cadena)
     print('[W/S] Navegar | [Q] Cerrar')
     print(BORDE_HORIZONTAL_DOBLE)
     
@@ -251,14 +252,15 @@ def manejar_inventario(inventario):
             elif tecla == 'e':
                 manejar_equipado_item(id_item, inventario)
             elif tecla == 't':
-                descartar_item(id_item,inventario)
+                print(f'Descartar {inventario[cursor]["nombre"]}? [S/N]')
+                confirmacion = ''
+                while confirmacion not in ['s','n']:
+                    confirmacion = obtener_tecla()
+                if confirmacion == 's':
+                    descartar_item(id_item,inventario)
                 if len(inventario) < largo_original and cursor != 0:
                     cursor -= 1
         if cursor < desvio_cursor:
             desvio_cursor = cursor
         elif cursor >= desvio_cursor + ITEMS_POR_PAGINA:
             desvio_cursor += 1
-
-    
-
-
