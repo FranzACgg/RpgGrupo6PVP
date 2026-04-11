@@ -156,15 +156,9 @@ def centrar_texto(cadena):
     '''
     return cadena.center(ANCHO_UI)
 
-'''    if cursor < desvio_cursor:
-        desvio_cursor = cursor
-    else:
-        desvio_cursor += ITEMS_POR_PAGINA
-'''
-
 def mostrar_inventario(inventario,cursor,desvio_cursor):
     '''
-    Entrada: lista(inventario), seleccion: entero (donde esta parado el cursor), desvio_cursor: entero (donde arranca a mostrarse el menu)
+    Entrada: inventario: lista(inventario), cursor: entero (donde esta parado el cursor), desvio_cursor: entero (donde arranca a mostrarse el menu)
     Objetivo: mostrar el inventario
     '''
     print(BORDE_HORIZONTAL_DOBLE)
@@ -192,5 +186,72 @@ def mostrar_inventario(inventario,cursor,desvio_cursor):
     
     print(BORDE_HORIZONTAL_SIMPLE)
 
+def mostrar_panel_detalle(inventario, cursor):
+    '''
+    Entrada: inventario: lista(inventario), cursor: entero (donde esta parado el cursor)
+    Objetivo: Mostrar panel detalle
+    '''
+    if len(inventario) == 0:
+        print(' ' * ANCHO_UI)
+        print(BORDE_HORIZONTAL_SIMPLE)
+        return
+    print(f'{inventario[cursor]["nombre"]}')
+    print(f'{inventario[cursor]["tipo"]} | X{inventario[cursor]["cantidad"]}')
+    print(BORDE_HORIZONTAL_SIMPLE)
+
+def mostrar_controles(inventario, cursor):
+    '''
+    Entrada: inventario: lista(inventario), cursor: entero (donde esta parado el cursor)
+    Objetivo: Mostrar controles
+    '''
+    if len(inventario) == 0:
+        print(' ' * ANCHO_UI)
+        print(BORDE_HORIZONTAL_DOBLE)
+        return
+    item = inventario[cursor]
+    cadena = ''
+    if item['tipo'] == 'consumible':
+        cadena += '[U] Usar '
+    if item['tipo'] == 'equipable':
+        if item['equipado']:
+            cadena += '[E] Desequipar '
+        else:
+            cadena += '[E] Equipar '
+    print(cadena + '[T] tirar ')
+    print('[W/S] Navegar | [Q] Cerrar')
+    print(BORDE_HORIZONTAL_DOBLE)
+    
+def manejar_inventario(inventario,cursor,desvio_cursor):
+    '''
+    Entrada: lista, entero, entero
+    Objetivo: Maneja y coordina todas las operaciones del inventario
+    '''
+    tecla = ''
+    while tecla != 'q':
+        limpiar_consola()
+        mostrar_inventario(inventario,cursor,desvio_cursor)
+        mostrar_panel_detalle(inventario, cursor)
+        mostrar_controles(inventario, cursor)
+        tecla = obtener_tecla()
+        if len(inventario) > 0:
+            id_item = inventario[cursor]['id_item']
+            if tecla == 'w':
+                if cursor != 0:
+                    cursor -= 1
+            elif tecla == 's':
+                if cursor != len(inventario) -1:
+                    cursor += 1
+            elif tecla == 'u':
+                usar_item(id_item, inventario)
+            elif tecla == 'e':
+                manejar_equipado_item(id_item, inventario)
+            elif tecla == 't':
+                descartar_item(id_item,inventario)
+        if cursor < desvio_cursor:
+            desvio_cursor = cursor
+        elif cursor >= desvio_cursor + ITEMS_POR_PAGINA:
+            desvio_cursor += 1
+
+    
 
 
