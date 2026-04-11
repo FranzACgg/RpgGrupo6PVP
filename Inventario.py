@@ -31,9 +31,12 @@ def crear_inventario():
 
 def agregar_item(item,inventario):
     '''
-    Entrada: diccionario
+    Entrada: Diccionario , Lista
+    Params: 
+        item: Diccionario con el item a agregar al inventario
+        inventario: Lista con todos los items en el inventario
     Objetivo: Agregar item al inventario
-    Salida: none
+    Salida: none. Modifica el inventario original que toma la funcion
     '''
     if item.keys() != ITEM_KEYS.keys():
         return print('Error, el objeto ingresado no tiene las keys de un item') # TODO: reemplazar por manejo de errores
@@ -48,7 +51,10 @@ def agregar_item(item,inventario):
 
 def busqueda_item_por_id(id_item, inventario):
     '''
-    Entrada: entero (id del item a buscar), lista (inventario)
+    Entrada: Entero, Lista
+    Params:
+        id_item: Id del item a buscar
+        inventario: Lista con todos los items en el inventario
     Objetivo: Buscar items secuencialmente segun ID
     Salida: Numero entero (indice del slot donde esta el item buscado o -1 si el item no esta presente)
     '''
@@ -62,9 +68,12 @@ def busqueda_item_por_id(id_item, inventario):
 
 def usar_item(id_item, inventario):
     '''
-    Entrada: entero (id del item a buscar), lista (inventario)
+    Entrada: Entero, Lista
+    Params:
+        id_item: Id del item a usar
+        inventario: Lista con todos los items en el inventario
     Objetivo: Manejar el uso de items
-    Salida: True o error
+    Salida: True o none. Modifica el inventario original que toma la funcion
     '''
     i = busqueda_item_por_id(id_item, inventario)
     if i == -1:
@@ -81,9 +90,12 @@ def usar_item(id_item, inventario):
     
 def manejar_equipado_item(id_item, inventario): # TODO agregar casos donde el subtipo de item ya esta equipado
     '''
-    Entrada: entero (id del item a buscar), lista (inventario)
+    Entrada: Entero, Lista
+    Params: 
+        id_item: Id del item a equipar/desequipar
+        inventario: Lista con todos los items en el inventario
     Objetivo: equipar/desquipar items
-    Salida: True o error
+    Salida: True o none. Modifica el inventario original que toma la funcion
     '''
     i = busqueda_item_por_id(id_item, inventario)
     if i == -1:
@@ -98,16 +110,21 @@ def manejar_equipado_item(id_item, inventario): # TODO agregar casos donde el su
 def exportar_items_equipados(inventario):
     '''
     Entrada: lista (inventario)
+    Params:
+        inventario: Lista con todos los items en el inventario
     Objetivo: exportar una lista con los items equipados
-    Salida: lista de items
+    Salida: lista de diccionarios con los items equipados
     '''
     return [item for item in inventario if item['equipado']]
 
 def descartar_item(id_item, inventario):
     '''
-    Entrada: entero (id), lista (inventario)
+    Entrada: entero, lista
+    Params: 
+        id_item: Id del item a descartar
+        inventario: Lista con todos los items en el inventario
     Objetivo: descartar un item del inventario
-    Salida: True/False s/exito de la operacion
+    Salida: True/False s/exito de la operacion. Modifica el inventario original que toma la funcion
     '''
     i = busqueda_item_por_id(id_item, inventario)
     if i == -1:
@@ -136,13 +153,13 @@ def limpiar_consola():
     Objetivo: limpiar consola según el sistema operativo
     nt = Windows, cls es el comando para limpiar la consola en Windows
     clear es el comando para limpiar la consola en Unix/Linux/Mac
+    Salida: none
     '''
     os.system('cls' if os.name == 'nt' else 'clear')
 
-# funcion para obtener una tecla sin necesidad de presionar enter, usando msvcrt (solo funciona en Windows)
 def obtener_tecla():
     '''
-    Objetivo: obtener una tecla sin necesidad de presionar enter (solo Windows)
+    Objetivo: obtener una tecla sin necesidad de presionar enter (solo Windows) usando msvcrt
     msvcrt.getch() pausa el programa haste que el usuario presione usa tecla, luego devuelve un byte, este se decodifica a string en formato utf-8 y se convierte a minuscula para facilitar la comparación
     Salida: string (la tecla que se presionó)
     '''
@@ -150,7 +167,9 @@ def obtener_tecla():
 
 def centrar_texto(cadena):
     '''
-    Entrada: string 
+    Entrada: string
+    Params:
+        cadena: texto a centrar
     Objetivo: centrar texto en el ancho del UI
     Salida: string
     '''
@@ -158,8 +177,13 @@ def centrar_texto(cadena):
 
 def mostrar_inventario(inventario,cursor,desvio_cursor):
     '''
-    Entrada: inventario: lista(inventario), cursor: entero (donde esta parado el cursor), desvio_cursor: entero (donde arranca a mostrarse el menu)
-    Objetivo: mostrar el inventario
+    Entrada: lista, entero, entero
+    Params:
+        inventario: Lista con todos los items en el inventario
+        cursor: Posición del item seleccionado actualmente en la lista
+        desvio_cursor: Desde que posicion de la lista empezar a dibujar la pantalla.
+    Objetivo: mostrar a el usuario el panel del inventario con todos los items
+    Salida: none
     '''
     print(BORDE_HORIZONTAL_DOBLE)
     print(centrar_texto(f'INVENTARIO ({len(inventario)}/{INVENTARIO_MAXIMO})'))
@@ -187,8 +211,12 @@ def mostrar_inventario(inventario,cursor,desvio_cursor):
 
 def mostrar_panel_detalle(inventario, cursor):
     '''
-    Entrada: inventario: lista(inventario), cursor: entero (donde esta parado el cursor)
-    Objetivo: Mostrar panel detalle
+    Entrada: lista, entero
+    Params:
+        inventario: Lista con todos los items en el inventario
+        cursor: Posición del item seleccionado actualmente en la lista
+    Objetivo: mostrar a el panel de detalle
+    Salida: none
     '''
     if len(inventario) == 0:
         print(' ' * ANCHO_UI)
@@ -200,8 +228,12 @@ def mostrar_panel_detalle(inventario, cursor):
 
 def mostrar_controles(inventario, cursor):
     '''
-    Entrada: inventario: lista(inventario), cursor: entero (donde esta parado el cursor)
-    Objetivo: Mostrar controles
+    Entrada: lista, entero
+    Params:
+        inventario: Lista con todos los items en el inventario
+        cursor: Posición del item seleccionado actualmente en la lista
+    Objetivo: Mostrar el panel de controles disponibles para el item seleccionado
+    Salida: none
     '''
     if len(inventario) == 0:
         print(' ' * ANCHO_UI)
@@ -225,7 +257,10 @@ def mostrar_controles(inventario, cursor):
 def manejar_inventario(inventario):
     '''
     Entrada: lista
+    Params:
+        inventario: Lista con todos los items en el inventario
     Objetivo: Maneja y coordina todas las operaciones del inventario
+    Salida: none
     '''
     tecla = ''
     cursor = 0
