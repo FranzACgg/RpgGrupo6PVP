@@ -221,13 +221,16 @@ def mostrar_controles(inventario, cursor):
     print('[W/S] Navegar | [Q] Cerrar')
     print(BORDE_HORIZONTAL_DOBLE)
     
-def manejar_inventario(inventario,cursor,desvio_cursor):
+def manejar_inventario(inventario):
     '''
-    Entrada: lista, entero, entero
+    Entrada: lista
     Objetivo: Maneja y coordina todas las operaciones del inventario
     '''
     tecla = ''
+    cursor = 0
+    desvio_cursor = 0
     while tecla != 'q':
+        largo_original = len(inventario)
         limpiar_consola()
         mostrar_inventario(inventario,cursor,desvio_cursor)
         mostrar_panel_detalle(inventario, cursor)
@@ -243,10 +246,14 @@ def manejar_inventario(inventario,cursor,desvio_cursor):
                     cursor += 1
             elif tecla == 'u':
                 usar_item(id_item, inventario)
+                if len(inventario) < largo_original and cursor != 0:
+                    cursor -= 1
             elif tecla == 'e':
                 manejar_equipado_item(id_item, inventario)
             elif tecla == 't':
                 descartar_item(id_item,inventario)
+                if len(inventario) < largo_original and cursor != 0:
+                    cursor -= 1
         if cursor < desvio_cursor:
             desvio_cursor = cursor
         elif cursor >= desvio_cursor + ITEMS_POR_PAGINA:
