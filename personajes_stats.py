@@ -1,274 +1,381 @@
-# Para subir cambios a github
-# git push origin Personajes y stats
+import random
+import os
+import msvcrt
 
-# para descargar los cambios de otros
-# git fetch origin -a
-# git pull origin main
+# Diccionario de clases disponibles con sus estadísticas base y habilidades.
+CLASES_DISPONIBLES = {
+    
+    'Guerrero': {
+        'stats_base': {
+            'fuerza': 80,
+            'defensa': 70,
+            'magia': 10,
+            'espiritu': 20,
+            'agilidad': 40,
+            'suerte': 0,
+            'hp': 200,
+            'mp': 30,
+        },
+        'habilidades': [
+            {'nombre': 'Golpe Brutal',   'tipo': 'fisico',  'valor': 35, 'probabilidad': 90, 'costo_mp': 5},
+            {'nombre': 'Escudo de Acero','tipo': 'fisico',  'valor': 20, 'probabilidad': 80, 'costo_mp': 8},
+            {'nombre': 'Grito de Guerra','tipo': 'fisico',  'valor': 50, 'probabilidad': 60, 'costo_mp': 15},
+        ],
+    },
+    'Pirata': {
+        'stats_base': {
+            'fuerza': 200,
+            'defensa': 40,
+            'magia': 15,
+            'espiritu': 25,
+            'agilidad': 60,
+            'suerte': 0,
+            'hp': 100,
+            'mp': 80,
+        },
+        'habilidades': [
+            {'nombre': 'Espadazo Pirata',     'tipo': 'fisico',  'valor': 40, 'probabilidad': 85, 'costo_mp': 5},
+            {'nombre': 'Disparo de Mosquete', 'tipo': 'fisico',  'valor': 55, 'probabilidad': 70, 'costo_mp': 10},
+            {'nombre': 'Maldicion del Mar',   'tipo': 'magico',  'valor': 45, 'probabilidad': 65, 'costo_mp': 20},
+        ],
+    },
+    'Bufon': {
+        'stats_base': {
+            'fuerza': 80,
+            'defensa': 25,
+            'magia': 55,
+            'espiritu': 35,
+            'agilidad': 90,
+            'suerte': 0,
+            'hp': 90,
+            'mp': 70,
+        },
+        'habilidades': [
+            {'nombre': 'Cuchillo Arrojadizo', 'tipo': 'fisico',  'valor': 25, 'probabilidad': 92, 'costo_mp': 3},
+            {'nombre': 'Confusion Magica',    'tipo': 'magico',  'valor': 50, 'probabilidad': 55, 'costo_mp': 25},
+            {'nombre': 'Bofeton Humillante',  'tipo': 'fisico',  'valor': 15, 'probabilidad': 98, 'costo_mp': 0},
+        ],
+    },
+}
 
-# para guardar cambios localmente
-# git add personajes_stats.py
-# git commit -m "comentario"
+# Lista de personajes seleccionables con su información y estado de desbloqueo.
+PERSONAJES_SELECCIONABLES = [
+    {
+        'nombre': 'Ragnar',
+        'clase': 'Guerrero',
+        'descripcion': 'Un guerrero con gran defensa y mucha vida.',
+        'bloqueado': False
+    },
+    {
+        'nombre': 'Morgan',
+        'clase': 'Pirata',
+        'descripcion': 'Un combatiente con fuerza y ataques impredecibles.',
+        'bloqueado': False
+    },
+    {
+        'nombre': 'Loki',
+        'clase': 'Bufon',
+        'descripcion': 'Rápido, escurridizo y experto en trucos y magia.',
+        'bloqueado': False
+    },
+    {
+        'nombre': '???',
+        'clase': 'Oculto',
+        'descripcion': 'Este personaje aún no ha sido descubierto.',
+        'bloqueado': True
+    }
+]
 
 
-# funcion def para crear personajes con nombres de mitologia nordica juego rpg usando diccionarios. 
-# agrega un docstring a la funcion con entrada, salida y objetivo de la funcion
-
+# Función para crear un personaje a partir de un nombre y clase, utilizando diccionarios anidados para almacenar sus estadísticas y habilidades.
 def crear_personaje(nombre, clase):
-    stats = asignar_stats_por_clase(clase)
-
-    if stats is None:
+    if clase not in CLASES_DISPONIBLES:
         return None
+
+    datos_clase = CLASES_DISPONIBLES[clase]
+    stats = datos_clase['stats_base'].copy()
+
+    habilidades = []
+    for habilidad in datos_clase['habilidades']:
+        habilidades.append(habilidad.copy())
 
     personaje = {
-        "nombre": nombre,
-        "clase": clase,
-        "vida_actual": stats["vida_max"],
-        "vida_max": stats["vida_max"],
-        "mana": stats["mana"],
-        "estado": "vivo",
-        "estadisticas": {
-            "fuerza": stats["fuerza"],
-            "defensa": stats["defensa"],
-            "velocidad": stats["velocidad"],
-            "critico": stats["critico"]
-        }
+        'nombre': nombre,
+        'clase': clase,
+        'nivel': 1,
+        'vidas': 3,
+        'stats_base': stats,
+        'stats_actuales': {
+            'hp': stats['hp'],
+            'mp': stats['mp'],
+        },
+        'habilidades': habilidades,
     }
-
     return personaje
 
-
-# funcion def para asignar estadisticas a los personajes creados con la funcion anterior, utilizando diccionarios anidados. 
-# agrega un docstring a la funcion con entrada, salida y objetivo de la funcion
-
-def asignar_stats_por_clase(clase):
-    if clase == "Guerrero":
-        return {
-            "vida_max": 120,
-            "mana": 30,
-            "fuerza": 15,
-            "defensa": 10,
-            "velocidad": 5,
-            "critico": 10
-        }
-
-    elif clase == "Mago":
-        return {
-            "vida_max": 80,
-            "mana": 100,
-            "fuerza": 20,
-            "defensa": 3,
-            "velocidad": 6,
-            "critico": 15
-        }
-
-    elif clase == "Arquera":
-        return {
-            "vida_max": 90,
-            "mana": 50,
-            "fuerza": 12,
-            "defensa": 5,
-            "velocidad": 12,
-            "critico": 25
-        }
-
+# Función para mostrar las estadísticas de un personaje de forma clara y formateada, utilizando caracteres especiales para mejorar la presentación.
+def recibir_danio(personaje, cantidad, tipo):
+    if tipo == 'fisico':
+        danio_final = cantidad - personaje['stats_base']['defensa']
+    elif tipo == 'magico':
+        danio_final = cantidad - personaje['stats_base']['espiritu']
     else:
-        print("Clase no válida")
+        danio_final = cantidad
+
+    if danio_final < 1:
+        danio_final = 1
+
+    personaje['stats_actuales']['hp'] -= danio_final
+    if personaje['stats_actuales']['hp'] < 0:
+        personaje['stats_actuales']['hp'] = 0
+
+    return danio_final
+
+# Función para curar a un personaje, asegurándose de no exceder su HP máximo.
+def curar(personaje, cantidad):
+    hp_max = personaje['stats_base']['hp']
+    hp_actual = personaje['stats_actuales']['hp']
+    espacio = hp_max - hp_actual
+    curado = min(cantidad, espacio)
+    personaje['stats_actuales']['hp'] += curado
+    return curado
+
+# Función para verificar si un personaje está vivo o muerto, basándose en su HP actual.
+def esta_vivo(personaje):
+    return personaje['stats_actuales']['hp'] > 0
+
+# Función para usar una habilidad de un personaje, verificando el costo de MP y calculando el éxito basado en la probabilidad de la habilidad.
+def usar_habilidad(personaje, indice_habilidad):
+    habilidades = personaje['habilidades']
+    if indice_habilidad < 0 or indice_habilidad >= len(habilidades):
         return None
 
+    habilidad = habilidades[indice_habilidad]
+    if personaje['stats_actuales']['mp'] < habilidad['costo_mp']:
+        return None
 
-personaje1 = crear_personaje("Ragnar", "Guerrero")
-personaje2 = crear_personaje("Eldrion", "Mago")
-personaje3 = crear_personaje("Mirella", "Arquera")
+    personaje['stats_actuales']['mp'] -= habilidad['costo_mp']
+    tirada = random.randint(1, 100)
+    exito = tirada <= habilidad['probabilidad']
 
-#Funcion para recibir daño a un personaje y actualizar su vida actual, si la vida llega a 0 o menos, cambiar el estado a "muerto". 
-# Agrega un docstring a la funcion con entrada, salida y objetivo de la funcion
+    return {'exito': exito, 'habilidad': habilidad}
 
-def recibir_danio_con_defensa(personaje, dano, defensa_total):
-    dano_final = dano - defensa_total
+# Función para revivir a un personaje, restaurando su HP y MP a los valores máximos y reduciendo su contador de vidas.
+def revivir(personaje):
+    if personaje['vidas'] <= 0:
+        return False
+    personaje['vidas'] -= 1
+    personaje['stats_actuales']['hp'] = personaje['stats_base']['hp']
+    personaje['stats_actuales']['mp'] = personaje['stats_base']['mp']
+    return True
 
-    if dano_final < 0:
-        dano_final = 0
+# Función para aplicar el efecto de un ítem consumible a un personaje, como curar HP o restaurar MP.
+def aplicar_efecto_consumible(personaje, item):
+    if item['tipo'] != 'consumible':
+        return None
 
-    personaje["vida_actual"] -= dano_final
+    efecto = item.get('efecto', {})
+    if 'hp' in efecto:
+        curar(personaje, efecto['hp'])
+    if 'mp' in efecto:
+        mp_max = personaje['stats_base']['mp']
+        personaje['stats_actuales']['mp'] = min(
+            personaje['stats_actuales']['mp'] + efecto['mp'], mp_max
+        )
+    return item
 
-    if personaje["vida_actual"] <= 0:
-        personaje["vida_actual"] = 0
-        personaje["estado"] = "muerto"
-
-    return dano_final
-
-def curar(personaje, cantidad):
-    if personaje["estado"] == "muerto":
-        print("No se puede curar un personaje muerto")
-        return
-    
-    personaje["vida_actual"] += cantidad
-    
-    # No puede superar la vida máxima
-    if personaje["vida_actual"] > personaje["vida_max"]:
-        personaje["vida_actual"] = personaje["vida_max"]
-    
-    print(f"{personaje['nombre']} se cura {cantidad} de vida")
-
-def esta_vivo(personaje):
-    return personaje["estado"] == "vivo"
-
-#Funcion para el combate entre dos personajes, donde cada uno ataca al otro y se actualizan sus vidas y estados.
-
-import random
-
-import random
-
-def atacar(atacante, defensor, equipo_atacante=None, equipo_defensor=None):
-    stats_atacante = obtener_stats_combate(atacante, equipo_atacante)
-    stats_defensor = obtener_stats_combate(defensor, equipo_defensor)
-
-    dano_base = stats_atacante["fuerza"]
-    prob_critico = stats_atacante["critico"]
-
-    es_critico = random.randint(1, 100) <= prob_critico
-
-    if es_critico:
-        dano_base *= 2
-
-    dano_real = recibir_danio_con_defensa(defensor, dano_base, stats_defensor["defensa"])
-
-    resultado = {
-        "atacante": atacante["nombre"],
-        "defensor": defensor["nombre"],
-        "critico": es_critico,
-        "dano_base": dano_base,
-        "dano_real": dano_real,
-        "vida_restante": defensor["vida_actual"],
-        "defensor_sigue_vivo": esta_vivo(defensor),
-        "stats_atacante": stats_atacante,
-        "stats_defensor": stats_defensor
-    }
-
-    return resultado
-
-
-def combate_simple(personaje1, personaje2):
-    turno = 1
-
-    while esta_vivo(personaje1) and esta_vivo(personaje2):
-        print(f"\n--- Turno {turno} ---")
-
-        resultado1 = atacar(personaje1, personaje2)
-        print(f"{resultado1['atacante']} ataca a {resultado1['defensor']}")
-
-        if resultado1["critico"]:
-            print("¡Golpe crítico!")
-
-        print(f"Daño real: {resultado1['dano_real']}")
-        print(f"Vida restante de {resultado1['defensor']}: {resultado1['vida_restante']}")
-
-        if not resultado1["defensor_sigue_vivo"]:
-            print(f"{personaje2['nombre']} ha sido derrotado")
-            break
-
-        resultado2 = atacar(personaje2, personaje1)
-        print(f"{resultado2['atacante']} ataca a {resultado2['defensor']}")
-
-        if resultado2["critico"]:
-            print("¡Golpe crítico!")
-
-        print(f"Daño real: {resultado2['dano_real']}")
-        print(f"Vida restante de {resultado2['defensor']}: {resultado2['vida_restante']}")
-
-        if not resultado2["defensor_sigue_vivo"]:
-            print(f"{personaje1['nombre']} ha sido derrotado")
-            break
-
-        turno += 1
-
-
-#Funcion para unir estadisticas de equipo a las del personaje, sumando las bonificaciones de los items equipados a las estadísticas base del personaje.
-
-def calcular_bonus_equipo(items_equipados):
-    bonus_total = {
-        "fuerza": 0,
-        "defensa": 0,
-        "velocidad": 0,
-        "critico": 0,
-        "vida_max": 0,
-        "mana": 0
-    }
-
+# Función para calcular las estadísticas totales de un personaje considerando su equipamiento actual.
+def obtener_stats_con_equipamiento(personaje, items_equipados):
+    stats_totales = personaje['stats_base'].copy()
     for item in items_equipados:
-        if "bonus" in item:
-            for stat in item["bonus"]:
-                if stat in bonus_total:
-                    bonus_total[stat] += item["bonus"][stat]
+        efecto = item.get('efecto', {})
+        for stat, valor in efecto.items():
+            if stat in stats_totales:
+                stats_totales[stat] += valor
+    return stats_totales
 
-    return bonus_total
+# Función para calcular el bonus de equipo basado en los ítems equipados, sumando los efectos de cada ítem a las estadísticas del personaje.
+def mostrar_stats(personaje):
+    ancho = 36
+    linea = '═' * ancho
+    print(f'╔{linea}╗')
+    print(f'║  {personaje["nombre"]} ({personaje["clase"]})'.ljust(ancho + 2) + '║')
+    print(f'╠{linea}╣')
+    print(f'║  Nivel : {personaje["nivel"]}   Vidas: {"♥ " * personaje["vidas"]}'.ljust(ancho + 2) + '║')
+    hp_a = personaje['stats_actuales']['hp']
+    hp_m = personaje['stats_base']['hp']
+    mp_a = personaje['stats_actuales']['mp']
+    mp_m = personaje['stats_base']['mp']
+    print(f'║  HP : {hp_a:>3} / {hp_m:<3}   MP : {mp_a:>3} / {mp_m:<3}  ║')
+    print(f'╠{linea}╣')
+    sb = personaje['stats_base']
+    stats_mostrar = ['fuerza', 'defensa', 'magia', 'espiritu', 'agilidad', 'suerte']
+    for stat in stats_mostrar:
+        linea_stat = f'║  {stat.capitalize():<10}: {sb[stat]:<4}'
+        print(linea_stat.ljust(ancho + 2) + '║')
+    print(f'╚{linea}╝')
 
-def obtener_stats_combate(personaje, items_equipados=None):
-    stats_finales = {
-        "vida_max": personaje["vida_max"],
-        "mana": personaje["mana"],
-        "fuerza": personaje["estadisticas"]["fuerza"],
-        "defensa": personaje["estadisticas"]["defensa"],
-        "velocidad": personaje["estadisticas"]["velocidad"],
-        "critico": personaje["estadisticas"]["critico"]
-    }
+# Función para mostrar el menú de opciones en el juego, permitiendo al jugador ver su inventario o volver al juego.
+def mostrar_seleccion_personaje():
+    cursor = 0
 
-    if items_equipados is not None:
-        bonus = calcular_bonus_equipo(items_equipados)
+    while True:
+        os.system('cls' if os.name == 'nt' else 'clear')
+        print('╔════════════════════════════════════════════════════╗')
+        print('║             SELECCIÓN DE PERSONAJE                 ║')
+        print('╠════════════════════════════════════════════════════╣')
 
-        for stat in bonus:
-            if stat in stats_finales:
-                stats_finales[stat] += bonus[stat]
+        for i, personaje in enumerate(PERSONAJES_SELECCIONABLES):
+            marcador = '►' if i == cursor else ' '
+            texto = f'{marcador} {personaje["nombre"]} - {personaje["clase"]}'
+            print(f'║ {texto}'.ljust(53) + '║')
 
-    return stats_finales
+        print('╠════════════════════════════════════════════════════╣')
 
-personaje1 = crear_personaje("Ragnar", "Guerrero")
-personaje2 = crear_personaje("Mirella", "Arquera")
+        personaje_actual = PERSONAJES_SELECCIONABLES[cursor]
 
-espada = {
-    "id_item": 101,
-    "nombre": "Espada de hierro",
-    "tipo": "equipable",
-    "cantidad": 1,
-    "equipado": True,
-    "bonus": {
-        "fuerza": 5
-    }
-}
+        if personaje_actual['bloqueado']:
+            print(f'║ Nombre: ???'.ljust(53) + '║')
+            print(f'║ Clase : ???'.ljust(53) + '║')
+            print(f'║ Este personaje permanece oculto...'.ljust(53) + '║')
+            print('╠════════════════════════════════════════════════════╣')
+            print(f'║ HP:???  MP:???  FUE:???  DEF:???'.ljust(53) + '║')
+            print(f'║ MAG:???  ESP:???  AGI:???  SUE:???'.ljust(53) + '║')
+            print('╠════════════════════════════════════════════════════╣')
+            print('║ Habilidades:'.ljust(53) + '║')
+            print(f'║ - ???'.ljust(53) + '║')
+            print(f'║ - ???'.ljust(53) + '║')
+            print(f'║ - ???'.ljust(53) + '║')
+        else:
+            clase_actual = personaje_actual['clase']
+            datos = CLASES_DISPONIBLES[clase_actual]
+            sb = datos['stats_base']
 
-escudo = {
-    "id_item": 102,
-    "nombre": "Escudo de roble",
-    "tipo": "equipable",
-    "cantidad": 1,
-    "equipado": True,
-    "bonus": {
-        "defensa": 4
-    }
-}
+            descripcion = personaje_actual["descripcion"]
+            if len(descripcion) > 50:
+                descripcion = descripcion[:47] + "..."
 
-arco_largo = {
-    "id_item": 103,
-    "nombre": "Arco largo",
-    "tipo": "equipable",
-    "cantidad": 1,
-    "equipado": True,
-    "bonus": {
-        "fuerza": 3,
-        "critico": 10
-    }
-}
+            print(f'║ Nombre: {personaje_actual["nombre"]}'.ljust(53) + '║')
+            print(f'║ Clase : {clase_actual}'.ljust(53) + '║')
+            print(f'║ {descripcion}'.ljust(53) + '║')
+            print('╠════════════════════════════════════════════════════╣')
+            print(f'║ HP:{sb["hp"]}  MP:{sb["mp"]}  FUE:{sb["fuerza"]}  DEF:{sb["defensa"]}'.ljust(53) + '║')
+            print(f'║ MAG:{sb["magia"]}  ESP:{sb["espiritu"]}  AGI:{sb["agilidad"]}  SUE:{sb["suerte"]}'.ljust(53) + '║')
+            print('╠════════════════════════════════════════════════════╣')
+            print('║ Habilidades:'.ljust(53) + '║')
 
-equipo_ragnar = [espada, escudo]
-equipo_mirella = [arco_largo]
+            for hab in datos['habilidades']:
+                linea_hab = f'- {hab["nombre"]} | MP:{hab["costo_mp"]} | %:{hab["probabilidad"]}'
+                print(f'║ {linea_hab}'.ljust(53) + '║')
 
-resultado = atacar(personaje1, personaje2, equipo_ragnar, equipo_mirella)
+        print('╠════════════════════════════════════════════════════╣')
+        print('║ W/S: mover   E: seleccionar'.ljust(53) + '║')
+        print('╚════════════════════════════════════════════════════╝')
 
-print(resultado)
-print(personaje1)
-print(personaje2)
+        tecla = msvcrt.getch().decode('utf-8', errors='ignore').lower()
 
-personaje1 = crear_personaje("Ragnar", "Guerrero")
-personaje2 = crear_personaje("Mirella", "Arquera")
+        if tecla == 'w':
+            cursor = (cursor - 1) % len(PERSONAJES_SELECCIONABLES)
+        elif tecla == 's':
+            cursor = (cursor + 1) % len(PERSONAJES_SELECCIONABLES)
+        elif tecla == 'e':
+            if personaje_actual['bloqueado']:
+                os.system('cls' if os.name == 'nt' else 'clear')
+                print('╔══════════════════════════════════════╗')
+                print('║      PERSONAJE AÚN BLOQUEADO         ║')
+                print('║   Debes cumplir una condición para   ║')
+                print('║         poder desbloquearlo.         ║')
+                print('╚══════════════════════════════════════╝')
+                print('\nPresiona cualquier tecla para continuar...')
+                msvcrt.getch()
+            else:
+                return personaje_actual
 
-combate_simple(personaje1, personaje2)
+# Función para evitar bugs que rompan el borde del menú, asegurando que el texto se ajuste correctamente dentro del espacio disponible.
+def imprimir_linea(texto, ancho):
+    print('║' + texto[:ancho].ljust(ancho) + '║')
+
+# Función para mostrar el menú de información del personaje, permitiendo al jugador navegar entre diferentes pestañas para ver detalles como estadísticas y habilidades.
+def menu_personaje(personaje):
+    pestanas = ['INFO', 'STATS', 'HABILIDADES']
+    tab = 0
+    ancho = 40
+
+    while True:
+        os.system('cls' if os.name == 'nt' else 'clear')
+
+        encabezado = f'  {personaje["nombre"]}  —  {personaje["clase"]}'
+        print('╔' + '═' * ancho + '╗')
+        print('║' + encabezado.ljust(ancho) + '║')
+
+        barra_tabs = '  '
+        for i, p in enumerate(pestanas):
+            if i == tab:
+                barra_tabs += f'[{p}]'
+            else:
+                barra_tabs += f' {p} '
+        print('╠' + '═' * ancho + '╣')
+        print('║' + barra_tabs.ljust(ancho) + '║')
+        print('╠' + '═' * ancho + '╣')
+
+        if tab == 0:
+            hp_a = personaje['stats_actuales']['hp']
+            hp_m = personaje['stats_base']['hp']
+            mp_a = personaje['stats_actuales']['mp']
+            mp_m = personaje['stats_base']['mp']
+            vidas_str = '♥ ' * personaje['vidas'] + '♡ ' * (3 - personaje['vidas'])
+            filas = [
+                f'  Nivel   : {personaje["nivel"]}',
+                f'  Vidas   : {vidas_str}',
+                f'  HP      : {hp_a} / {hp_m}',
+                f'  MP      : {mp_a} / {mp_m}',
+            ]
+            for fila in filas:
+                print('║' + fila.ljust(ancho) + '║')
+            for _ in range(4):
+                print('║' + ' ' * ancho + '║')
+
+        elif tab == 1:
+            sb = personaje['stats_base']
+            stats = ['fuerza', 'defensa', 'magia', 'espiritu', 'agilidad', 'suerte']
+            for stat in stats:
+                barras = '█' * (sb[stat] // 10) + '░' * (10 - sb[stat] // 10)
+                fila = f'  {stat.capitalize():<10}: {sb[stat]:<3}  {barras}'
+                print('║' + fila.ljust(ancho) + '║')
+            for _ in range(2):
+                print('║' + ' ' * ancho + '║')
+
+        elif tab == 2:
+             for hab in personaje['habilidades']:
+                 nombre = f'  ► {hab["nombre"]}'
+                 imprimir_linea(nombre, ancho)
+
+                 detalle = f'    {hab["tipo"].capitalize()} | Val:{hab["valor"]} | MP:{hab["costo_mp"]} | %{hab["probabilidad"]}'
+                 imprimir_linea(detalle, ancho)
+
+             for _ in range(2):
+                 imprimir_linea('', ancho)
+
+        print('╠' + '═' * ancho + '╣')
+        print('║' + '  A/D: cambiar pestaña   Q: Volver'.ljust(ancho) + '║')
+        print('╚' + '═' * ancho + '╝')
+
+        tecla = msvcrt.getch().decode('utf-8', errors='ignore').lower()
+        if tecla == 'a':
+            tab = (tab - 1) % len(pestanas)
+        elif tecla == 'd':
+            tab = (tab + 1) % len(pestanas)
+        elif tecla == 'q':
+            break
+
+
+if __name__ == "__main__":
+    while True:
+        seleccion = mostrar_seleccion_personaje()
+        personaje = crear_personaje(seleccion['nombre'], seleccion['clase'])
+
+        if personaje is not None:
+            menu_personaje(personaje)
+        else:
+            print("Error al crear el personaje.")
+            break
