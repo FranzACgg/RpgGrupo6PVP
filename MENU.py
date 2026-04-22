@@ -1,90 +1,103 @@
+# --- PROYECTO GLASSTION ---
 import os
-import time
-from rich.console import Console
-from rich.panel import Panel
-from rich.align import Align
-from rich.text import Text
-from rich.console import Console, Group
+import msvcrt 
 
-# Mantenemos tu lógica de ingeniería
-# $calcular\_vidas(i, p) = i - p$
-calcular_vidas = lambda iniciales, perdidas: iniciales - perdidas
+# Definimos el ancho de banda visual para que el centrado sea prolijo en toda la interfaz
+ANCHO_UI = 80
 
-console = Console()
+# Una funcion lambda cortita para limpiar la pantalla.
+# Se usa para borrar lo anterior y que el menu parezca una animacion al moverse
+limpiar = lambda: os.system('cls' if os.name == 'nt' else 'clear')
 
-def obtener_contenido_titulo():
-    """Genera el string con formato para el menú"""
-    logo = (
-        "[bold cyan]"
-        "  _____  _               _____  _____ _______ _____ ____  _   _ \n"
-        " / ____|| |        /\\   / ____|/ ____|__   __|_   _/ __ \\| \\ | |\n"
-        "| |  __ | |       /  \\ | (___ | (___    | |    | || |  | |  \\| |\n"
-        "| | |_ || |      / /\\ \\ \\___ \\ \\___ \\   | |    | || |  | | . ` |\n"
-        "| |__| || |____ / ____ \\____) |____) |  | |   _| || |__| | |\\  |\n"
-        " \\_____||______/_/    \\_\\_____/|_____/   |_|  |_____\\____/|_| \\_|\n"
-        "[/]"
-    )
-    return logo 
-def obtener_contenido_principal():
-    return "\n\n[bold white][1] EMPEZAR[/]\n[bold white][2] SALIR[/]"
+def mostrar_logo():
+    print("""
+ @@@@@@@  @       @@@@@@   @@@@@@   @@@@@@  @@@@@@@  \___/  @@@@@@  @   @@
+ @        @      @      @ @        @           @       X   @      @ @@  @
+ @  @@@@  @      @@@@@@@@  @@@@@@   @@@@@@     @      / \  @      @ @ @ @
+ @     @  @      @      @       @        @     @     /   \ @      @ @  @@
+  @@@@@@  @@@@@@ @      @ @@@@@@   @@@@@@      @     -----  @@@@@@  @   @
+    """)
 
+def mostrar_salon_heroes():
+    # Usamos un diccionario anidado para mapear los stats y descripciones de los heroes
+    # Esta estructura de clave:valor es para organizar la "fichas" de personajes
+    heroes = {
+        "Ragnar": {"Clase": "Guerrero", "Desc": "Gran defensa y mucha vida.", "Icono": "[Shield]"},
+        "Morgan": {"Clase": "Pirata", "Desc": "Ataques impredecibles y fuerza.", "Icono": "[Sword]"},
+        "Loki":   {"Clase": "Bufón", "Desc": "Rápido, escurridizo y usa trucos.", "Icono": "[Magic]"}
+    }
+    
+    limpiar()
+    print("=" * ANCHO_UI)
+    print(f"{'--- SALÓN DE HÉROES ---':^80}")
+    print("=" * ANCHO_UI)
+    
+    # Recorremos el diccionario usando el metodo .items()
+    for nombre, datos in heroes.items():
+        # CLASE 3: Formateo con f-strings para que los datos queden alineados
+        print(f" {datos['Icono']} {nombre.upper():<10} | {datos['Clase']:<10} | {datos['Desc']}")
+    
+    print("-" * ANCHO_UI)
+    print(f"{'[Presioná cualquier tecla para volver al menú]':^80}")
+    msvcrt.getch() # Pausamos el flujo hasta detectar un evento de teclado
+
+def mostrar_creditos():
+    # Lista simple con los integrantes del Grupo
+    autores = ["Franz Acevedo", "Juan Colonia", "Tomas Perez", "Facundo Zambrana"]
+    limpiar()
+    print(f"{'--- CREADORES DE GLASSTION ---':^80}")
+    print("-" * ANCHO_UI)
+    for nombre in autores:
+        # Centramos cada nombre dinamicamente
+        print(f"{nombre:^80}")
+    print("-" * ANCHO_UI)
+    print(f"\n{'[Presioná cualquier tecla para volver]':^80}")
+    msvcrt.getch()
 
 def menu_principal():
-    ejecutando = True
+    # Estructura de datos (lista) para gestionar los estados del menu
+    opciones = ["EMPEZAR", "SALÓN DE HÉROES", "CRÉDITOS", "SALIR"]
+    cursor = 0 # Puntero entero que rastrea el indice de la opcion seleccionada
     
-    while ejecutando:
-        os.system('cls' if os.name == 'nt' else 'clear')
+    while True:
+        limpiar()
+        mostrar_logo()
         
-        # 1. Preparamos el contenido del título (Logo)
-        contenido_logo = obtener_contenido_titulo()
+        print(f"{'MENU PRINCIPAL':^80}")
+        print("-" * ANCHO_UI)
         
-        # 2. Creamos el Panel PEQUEÑO (el de las opciones)
-        contenido_opciones = "[bold white][1] EMPEZAR[/]\n[bold white][2] SALIR[/]"
-        panel_opciones = Panel(
-            Align.center(contenido_opciones, vertical="middle"),
-            border_style="bright_magenta",
-            expand=False,
-            width=25,
-            height=5
-        )
-
-        # 3. CREAMOS EL GRUPO INTERNO
-        # Este grupo junta el logo y el panel de opciones
-        render_interno = Group(
-            Align.center(contenido_logo),
-            "\n", # Espacio entre logo y opciones
-            Align.center(panel_opciones)
-        )
-
-        # 4. Creamos el Panel GRANDE que envuelve a todo lo anterior
-        pantalla_completa = Panel(
-            Align.center(render_interno, vertical="middle"),
-            title="[bold yellow]══ GLASSTION ══[/]",
-            subtitle="[italic grey70]Seleccione su destino[/]",
-            border_style="bright_blue",
-            width=80,
-            height=22, # Aumentamos un poquito el alto para que quepa todo cómodo
-            padding=(1, 2)
-        )
-
-        # 5. Imprimimos el resultado final centrado en la terminal
-        console.print(Align(pantalla_completa, align="center", vertical="middle", height=console.size.height))
-        # 5. Input
-        seleccion = input("\n > ").strip()
+        # Iteramos con range y len para renderizar la opción con feedback visual
+        for i in range(len(opciones)):
+            if i == cursor:
+                # Si el índice coincide con el puntero, le metemos las flechitas
+                print(f"  ==>  [ {opciones[i]} ]  <==  ".center(ANCHO_UI))
+            else:
+                print(f"       {opciones[i]}       ".center(ANCHO_UI))
         
-        if seleccion == "1":
-            vidas = calcular_vidas(3, 0)
-            console.print(f"\n[bold green]DESPERTANDO... Vidas: {vidas}[/]")
-            time.sleep(2)
-            ejecutando = False 
-            capa_color_mapa.iniciar_mapa_recoleccion()
-        elif seleccion == "2":
-            console.print("[bold red]Saliendo...[/]")
-            ejecutando = False
-        else:
-            console.print("[bold red][!] Opción no válida[/]")
-            time.sleep(1)
+        print("-" * ANCHO_UI)
+        print(f"{'[W/S] Moverse  -  [Enter] Seleccionar':^80}")
 
+        # Capturamos la tecla que toca el usuario
+        # .decode('utf-8') sirve para pasar el dato de la tecla a texto comun
+        tecla = msvcrt.getch().decode('utf-8').lower()
+        
+        # Logica para mover el cursor (subir o bajar en la lista)
+        if tecla == 'w' and cursor > 0:
+            cursor -= 1
+        elif tecla == 's' and cursor < len(opciones) - 1:
+            cursor += 1
+        elif tecla == '\r': # El caracter '\r' representa la tecla Enter
+            if cursor == 0:
+                print(f"\n{'CARGANDO AVENTURA...':^80}")
+                break # Sale del menu para empezar el juego
+            elif cursor == 1:
+                mostrar_salon_heroes()
+            elif cursor == 2:
+                mostrar_creditos()
+            elif cursor == 3:
+                print(f"\n{'CERRANDO EL LIBRO DE GLASSTION...':^80}")
+                break
+            
 if __name__ == "__main__":
     menu_principal()
     
