@@ -14,7 +14,6 @@ CAMARA_ANCHO = 20
 # Posicion del personaje 
 pos_p = [1, 1] # Fila, Columna
 inventario = []
-
 #Tipos de Items
 #Maatriz de Items 1: 1 Fila Pociones Buenas 2: 2 Fila Items Buenos : 3 Fila Equipamiento Bueno : 4 Fila Pociones Malas 2: 5 Fila Items Malos : 6 Fila Equipamiento Malo 
 #Matriz 6 x 3 
@@ -102,7 +101,7 @@ def mover(tecla):
             respuesta = ""
             respuesta = input("¿Deseas Recoger el Objeto? S/N: ")
             if respuesta == "s" or respuesta == "S":
-                inventario.append(items[random.randint(1,6)][random.randint(1,3)])
+                inventario.append(items[random.randint(0,5)][random.randint(0,2)])
                 
         
         # Actualizamos matriz: borramos viejo, ponemos nuevo
