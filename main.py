@@ -20,7 +20,7 @@ Además, asume estos ajustes mínimos:
 from menu_pre_final import menu_principal
 from personajes import mostrar_seleccion_personaje, crear_personaje
 from inventario import crear_inventario, manejar_inventario
-from tresMapas_unidos import generar_mapa_prado, iniciar_mapa
+from main_mapas import iniciar_mapas, iniciar_mapa
 
 
 def main():
@@ -43,7 +43,7 @@ def main():
     inventario = crear_inventario()
 
     # 4) Crear mapa inicial
-    mapa_inicial = generar_mapa_prado()
+    mapa_inicial = iniciar_mapas()
     numero_mapa_inicial = 2  # 2 = prado, según tu módulo de mapas
 
     # 5) Entrar al mapa
