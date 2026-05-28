@@ -1,4 +1,4 @@
-# config.py — Constantes, símbolos, estilos y estado compartido
+# config.py — Constantes, símbolos, estilos y contexto
 
 # ─── Tamaño del mapa y cámara ─────────────────────────────────────────────────
 MAPA_REAL_ALTO = 90
@@ -242,22 +242,6 @@ items_mapa = {
             "equipado": False,
         },
     ],
-}
-
-# ─── Estado global del juego ──────────────────────────────────────────────────
-# hp/mp/hp_max/mp_max se sobreescriben desde main.py con los stats del personaje
-estado = {
-    "pos_p": [1, 52],
-    "simbolo_debajo": "░",
-    "hp": 100,
-    "mp": 50,
-    "hp_max": 100,
-    "mp_max": 50,
-    "inventario": [],  # lista de dicts — formato de inventario.py
-    "mapa_actual": None,
-    "numero_mapa": 1,
-    "pasos_jugador": 0,
-    "personaje": None,  # dict completo devuelto por crear_personaje()
 }
 
 

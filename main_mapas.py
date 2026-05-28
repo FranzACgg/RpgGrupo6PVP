@@ -27,7 +27,7 @@ def procesar_entrada(tecla, contexto):
         pantalla_menu_en_juego(obtener_tecla, contexto)
 
 
-# ─── Configurar estado antes de entrar al bucle ───────────────────────────────
+# ─── Configurar contexto antes de entrar al bucle ───────────────────────────────
 
 
 def iniciar_mapas(contexto):
@@ -51,10 +51,10 @@ def iniciar_mapas(contexto):
 def iniciar_mapa(contexto):
     """Bucle principal del juego. Llamar después de iniciar_mapas()."""
     while True:
-        dibujar_juego_centrado()
+        dibujar_juego_centrado(contexto)
 
         tecla = obtener_tecla()
-        procesar_entrada(tecla)
+        procesar_entrada(tecla, contexto)
 
         # Slimes solo se mueven en el Prado (mapa 2)
         if contexto["mundo"]["numero_mapa"] == 2:
@@ -62,7 +62,7 @@ def iniciar_mapa(contexto):
             if contexto["mundo"]["pasos_jugador"] % 2 == 0:
                 mover_slimes(contexto["mundo"]["mapa_actual"], contexto)
 
-        cambio_de_mapa()
+        cambio_de_mapa(contexto)
 
 
 # ─── Punto de entrada directo (para probar sin menú) ─────────────────────────
