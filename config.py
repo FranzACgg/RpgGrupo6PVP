@@ -7,10 +7,21 @@ CAMARA_ALTO = 20
 CAMARA_ANCHO = 40
 
 # ─── Símbolos ─────────────────────────────────────────────────────────────────
-simbolos_pasto = [",", ";", "'", "´"]
+simbolos_pasto = [
+    ",",
+    ";",
+    "'",
+    "´",
+]  # TODO "normalizar nombres de constantes a MAYÚSCULAS"
 
 # 0: Vacío  1: Entrada cueva  2: Pared cueva  3: Pared tréboles  4: Piso cueva
-simbolos_entorno = [" ", "O", "#", "♣", "."]
+simbolos_entorno = [
+    " ",
+    "O",
+    "#",
+    "♣",
+    ".",
+]  # TODO "normalizar nombres de constantes a MAYÚSCULAS"
 
 simbolos_especiales = ["P", "*"]  # 0: Jugador  1: Ítem
 
@@ -45,7 +56,7 @@ simbolos_entornos_no_remplazables = [
     "ζ",
 ]
 
-simbolo_slime = "ζ"
+simbolo_slime = "ζ"  # TODO "normalizar nombres de constantes a MAYÚSCULAS"
 
 # ─── Estilos Rich ─────────────────────────────────────────────────────────────
 ESTILOS = {
@@ -268,22 +279,3 @@ def crear_contexto():
             "enemigos_derrotados": set(),
         },  # enemigos_derrotados, mapas_visitados?
     }
-
-
-contexto = {
-    "estado_actual": None,
-    "personaje": None,  # toda la info del héroe agrupada
-    "inventario": [],  # todos los items
-    "enemigos": [],  # todos los enemigos, de cualquier tipo
-    "buffs_activos": [],
-    "mundo": {
-        "pos_p": [1, 52],
-        "simbolo_debajo": "░",
-        "mapa_actual": None,
-        "numero_mapa": 1,
-        "pasos_jugador": 0,
-    },  # mapa, posición, numero_mapa, simbolo_debajo
-    "progreso": {
-        "enemigos_derrotados": set(),
-    },  # enemigos_derrotados, mapas_visitados?
-}

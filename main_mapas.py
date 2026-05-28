@@ -1,51 +1,54 @@
 # main_mapas.py — Bucle principal del juego (mapas)
 
-import msvcrt   # Solo Windows. En Linux/Mac: import tty, sys, termios
+import msvcrt  # Solo Windows. En Linux/Mac: import tty, sys, termios
 
-from config      import estado, TECLAS_MOVIMIENTO, TECLAS_ACCION
-from mapa_prado  import generar_mapa_prado
-from jugador     import mover, cambio_de_mapa
-from entidades   import mover_slimes
-from ui          import dibujar_juego_centrado, pantalla_menu_en_juego
+from config import TECLAS_MOVIMIENTO, TECLAS_ACCION
+from mapa_prado import generar_mapa_prado, generar_enemigos_prado
+from jugador import mover, cambio_de_mapa
+from entidades import mover_slimes, inicializar_slimes
+from ui import dibujar_juego_centrado, pantalla_menu_en_juego
 
 
 # ─── Entrada de teclado ───────────────────────────────────────────────────────
 
+
 def obtener_tecla():
     """Lee una tecla sin necesidad de pulsar Enter (solo Windows)."""
-    return msvcrt.getch().decode('utf-8', errors='ignore').lower()
+    return msvcrt.getch().decode("utf-8", errors="ignore").lower()
 
 
 # ─── Procesado de entrada ─────────────────────────────────────────────────────
 
-def procesar_entrada(tecla):
+
+def procesar_entrada(tecla, contexto):
     if tecla in TECLAS_MOVIMIENTO:
-        mover(tecla)
-    elif tecla == TECLAS_ACCION[3]:   # o → menú de pausa
-        pantalla_menu_en_juego(obtener_tecla)
+        mover(tecla, contexto)
+    elif tecla == TECLAS_ACCION[3]:  # o → menú de pausa
+        pantalla_menu_en_juego(obtener_tecla, contexto)
 
 
 # ─── Configurar estado antes de entrar al bucle ───────────────────────────────
 
-def iniciar_mapas():
+
+def iniciar_mapas(contexto):
     """
-    Genera el mapa inicial (Prado) y configura el estado.
+    Genera el mapa inicial (Prado) y guarda el contexto.
     Llamado desde main.py después de elegir personaje.
-    Devuelve el mapa generado.
     """
-    from mapa_prado import generar_mapa_prado
     mapa = generar_mapa_prado()
-    estado["mapa_actual"]    = mapa
-    estado["numero_mapa"]    = 2          # 2 = Prado
-    estado["pos_p"][:]       = [1, 52]
-    estado["simbolo_debajo"] = "░"
-    estado["pasos_jugador"]  = 0
-    return mapa
+    contexto["mundo"]["mapa_actual"] = mapa
+    contexto["enemigos"] = generar_enemigos_prado()
+    contexto["mundo"]["numero_mapa"] = 2
+    contexto["mundo"]["pos_p"] = [1, 52]
+    contexto["mundo"]["simbolo_debajo"] = "░"
+    contexto["mundo"]["pasos_jugador"] = 0
+    inicializar_slimes(mapa, contexto)
 
 
 # ─── Bucle principal ──────────────────────────────────────────────────────────
 
-def iniciar_mapa():
+
+def iniciar_mapa(contexto):
     """Bucle principal del juego. Llamar después de iniciar_mapas()."""
     while True:
         dibujar_juego_centrado()
@@ -54,10 +57,10 @@ def iniciar_mapa():
         procesar_entrada(tecla)
 
         # Slimes solo se mueven en el Prado (mapa 2)
-        if estado["numero_mapa"] == 2:
-            estado["pasos_jugador"] += 1
-            if estado["pasos_jugador"] % 2 == 0:
-                mover_slimes(estado["mapa_actual"])
+        if contexto["mundo"]["numero_mapa"] == 2:
+            contexto["mundo"]["pasos_jugador"] += 1
+            if contexto["mundo"]["pasos_jugador"] % 2 == 0:
+                mover_slimes(contexto["mundo"]["mapa_actual"], contexto)
 
         cambio_de_mapa()
 

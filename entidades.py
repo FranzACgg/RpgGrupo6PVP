@@ -15,14 +15,6 @@ from config import (
 )
 
 
-# ─── Estado de los slimes ─────────────────────────────────────────────────────
-# Cada entrada: {"pos": [fila, col], "debajo": símbolo_que_pisaba}
-lista_slimes = [
-    {"pos": [40, 20], "debajo": "."},
-    {"pos": [50, 60], "debajo": ","},
-    {"pos": [30, 100], "debajo": "░"},
-]
-
 # TODO(refactor): inicializar_slimes ya lee del contexto pero NO está conectada.
 # Conectarla al subir de nivel, junto con carga de enemigos, en:
 #   - main_mapas.py -> iniciar_mapas()
