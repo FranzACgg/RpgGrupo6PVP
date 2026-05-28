@@ -14,60 +14,66 @@ from inventario import manejar_inventario
 
 console = Console()
 
+# Dimensiones de cámara para la cueva (más estrecha)
+from mapa_cueva import CUEVA_ALTO, CUEVA_ANCHO
+CAMARA_CUEVA_ALTO  = 15
+CAMARA_CUEVA_ANCHO = 30
 
-# ─── Renderizado del mapa ─────────────────────────────────────────────────────
 
 def dibujar_juego_centrado():
-    """Renderiza la cámara centrada en el jugador dentro de un Panel de Rich."""
     os.system('cls' if os.name == 'nt' else 'clear')
 
     pos_p       = estado["pos_p"]
     mapa_actual = estado["mapa_actual"]
-    hp          = estado["hp"]
-    mp          = estado["mp"]
-    hp_max      = estado["hp_max"]
-    mp_max      = estado["mp_max"]
+    hp, hp_max  = estado["hp"],  estado["hp_max"]
+    mp, mp_max  = estado["mp"],  estado["mp_max"]
+    n           = estado["numero_mapa"]
 
-    inicio_f = max(0, min(pos_p[0] - CAMARA_ALTO // 2, MAPA_REAL_ALTO - CAMARA_ALTO))
-    inicio_c = max(0, min(pos_p[1] - CAMARA_ANCHO // 2, MAPA_REAL_ANCHO - CAMARA_ANCHO))
+    # Cámara adaptada al mapa
+    if n == 4:   # cueva
+        cam_alto  = CAMARA_CUEVA_ALTO
+        cam_ancho = CAMARA_CUEVA_ANCHO
+        mapa_alto = CUEVA_ALTO
+        mapa_ancho = CUEVA_ANCHO
+    else:
+        cam_alto  = CAMARA_ALTO
+        cam_ancho = CAMARA_ANCHO
+        mapa_alto = MAPA_REAL_ALTO
+        mapa_ancho = MAPA_REAL_ANCHO
 
-    filas_coloreadas = []
-    for f in range(inicio_f, inicio_f + CAMARA_ALTO):
+    inicio_f = max(0, min(pos_p[0] - cam_alto  // 2, mapa_alto  - cam_alto))
+    inicio_c = max(0, min(pos_p[1] - cam_ancho // 2, mapa_ancho - cam_ancho))
+
+    filas = []
+    for f in range(inicio_f, inicio_f + cam_alto):
         fila_str = ""
-        for c in range(inicio_c, inicio_c + CAMARA_ANCHO):
+        for c in range(inicio_c, inicio_c + cam_ancho):
             char  = mapa_actual[f][c]
             color = ESTILOS.get(char, "white")
             fila_str += f"[{color}]{char}[/] "
-        filas_coloreadas.append(fila_str)
+        filas.append(fila_str)
 
-    # Nombre del personaje si está disponible
     nombre_personaje = ""
     if estado["personaje"]:
         p = estado["personaje"]
         nombre_personaje = f" — {p['nombre']} ({p['clase']})"
 
+    nombres_mapa = {1: "Mercado", 2: "Prado", 3: "Cementerio", 4: "Cueva"}
+    titulo_mapa  = nombres_mapa.get(n, "?")
+
     pantalla = Panel(
-        "\n".join(filas_coloreadas),
-        title    = f"[bold yellow]GLASSTION{nombre_personaje} — POS: {pos_p[0]},{pos_p[1]}[/]",
+        "\n".join(filas),
+        title    = f"[bold yellow]GLASSTION · {titulo_mapa}{nombre_personaje}[/]",
         subtitle = f"[bold red]HP: {hp}/{hp_max}[/] | [bold blue]MP: {mp}/{mp_max}[/]",
         border_style = "bright_blue",
         expand   = False,
         padding  = (1, 2),
     )
-
     console.print(Align(pantalla, align="center", vertical="middle",
                         height=console.size.height))
 
 
-# ─── Menú en juego ────────────────────────────────────────────────────────────
-
 def pantalla_menu_en_juego(obtener_tecla_fn):
-    """
-    Menú de pausa en juego.
-    - I  → abre el inventario completo (inventario.py)
-    - V  → vuelve al juego
-    - Q  → cierra el programa
-    """
     en_menu = True
     while en_menu:
         os.system('cls' if os.name == 'nt' else 'clear')
@@ -81,12 +87,10 @@ def pantalla_menu_en_juego(obtener_tecla_fn):
 
         opcion = obtener_tecla_fn()
 
-        if opcion == TECLAS_ACCION[1]:   # i — inventario
+        if opcion == TECLAS_ACCION[1]:
             manejar_inventario(estado["inventario"])
-
         elif opcion == "v":
             en_menu = False
-
-        elif opcion == TECLAS_ACCION[2]: # q — salir
+        elif opcion == TECLAS_ACCION[2]:
             print("\nSaliendo del juego...")
             exit()

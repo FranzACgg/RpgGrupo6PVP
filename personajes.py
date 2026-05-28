@@ -7,11 +7,9 @@ CLASES_DISPONIBLES = {
     
     'Guerrero': {
         'stats_base': {
-            'fuerza': 80,
-            'defensa': 70,
-            'magia': 10,
-            'espiritu': 20,
-            'agilidad': 40,
+            'fuerza': 8,
+            'defensa': 40,
+            'agilidad': 20,
             'suerte': 0,
             'hp': 200,
             'mp': 30,
@@ -24,11 +22,9 @@ CLASES_DISPONIBLES = {
     },
     'Pirata': {
         'stats_base': {
-            'fuerza': 200,
-            'defensa': 40,
-            'magia': 15,
-            'espiritu': 25,
-            'agilidad': 60,
+            'fuerza': 20,
+            'defensa': 20,
+            'agilidad': 30,
             'suerte': 0,
             'hp': 100,
             'mp': 80,
@@ -41,11 +37,9 @@ CLASES_DISPONIBLES = {
     },
     'Bufon': {
         'stats_base': {
-            'fuerza': 80,
-            'defensa': 25,
-            'magia': 55,
-            'espiritu': 35,
-            'agilidad': 90,
+            'fuerza': 8,
+            'defensa': 70,
+            'agilidad': 80,
             'suerte': 0,
             'hp': 90,
             'mp': 70,
@@ -257,7 +251,7 @@ def mostrar_seleccion_personaje():
             print(f'║ {descripcion}'.ljust(53) + '║')
             print('╠════════════════════════════════════════════════════╣')
             print(f'║ HP:{sb["hp"]}  MP:{sb["mp"]}  FUE:{sb["fuerza"]}  DEF:{sb["defensa"]}'.ljust(53) + '║')
-            print(f'║ MAG:{sb["magia"]}  ESP:{sb["espiritu"]}  AGI:{sb["agilidad"]}  SUE:{sb["suerte"]}'.ljust(53) + '║')
+            print(f'║ AGI:{sb["agilidad"]}  SUE:{sb["suerte"]}'.ljust(53) + '║')
             print('╠════════════════════════════════════════════════════╣')
             print('║ Habilidades:'.ljust(53) + '║')
 

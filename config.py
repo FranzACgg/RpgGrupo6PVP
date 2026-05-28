@@ -1,39 +1,29 @@
 # config.py — Constantes, símbolos, estilos y estado compartido
 
-# ─── Tamaño del mapa y cámara ─────────────────────────────────────────────────
 MAPA_REAL_ALTO  = 90
 MAPA_REAL_ANCHO = 130
 CAMARA_ALTO     = 20
 CAMARA_ANCHO    = 40
 
-# ─── Símbolos ─────────────────────────────────────────────────────────────────
 simbolos_pasto   = [",", ";", "'", "´"]
-
-# 0: Vacío  1: Entrada cueva  2: Pared cueva  3: Pared tréboles  4: Piso cueva
 simbolos_entorno = [" ", "O", "#", "♣", "."]
-
-simbolos_especiales = ["P", "*"]   # 0: Jugador  1: Ítem
+simbolos_especiales = ["P", "*"]
 
 simbolos_entornos_no_remplazables = [
-    "✿",  # 0  Flor decorativa 1
-    "❀",  # 1  Flor decorativa 2
-    "⚜",  # 2  Flor decorativa 3
-    "=",  # 3  Tronco
-    "🪨", # 4  Roca
-    "░",  # 5  Camino
-    "≈",  # 6  Ola de agua 1
-    "~",  # 7  Ola de agua 2
-    # Mercado
+    "✿", "❀", "⚜", "=", "🪨", "░", "≈", "~",
     "┌", "┐", "└", "┘", "─", "│", "▒", "N", "[", "]",
-    # Cementerio
-    "🚧", "🪦", "🗿", "🌲", "🏮", "📜",
-    # Mob
-    "ζ",
+    "+",        # valla cementerio (FIX: era 🚧)
+    "🪦", "🗿", "🌲", "🏮", "📜",
+    "ζ",        # slime
+    "G",        # goblin (ASCII, cueva)
+    "▓",        # camino cueva
+    "C",        # cofre cueva
+    "💀", "⛏", # decoración cueva
 ]
 
-simbolo_slime = "ζ"
+simbolo_slime  = "ζ"
+simbolo_goblin = "G"
 
-# ─── Estilos Rich ─────────────────────────────────────────────────────────────
 ESTILOS = {
     "P":  "bold white on dark_red",
     "*":  "bold yellow",
@@ -63,21 +53,23 @@ ESTILOS = {
     "┘":  "bold grey37",
     "[":  "bold white",
     "]":  "bold white",
-    "🚧": "bold yellow",
+    "+":  "bold yellow",       # valla cementerio
     "🪦": "bold white",
     "🗿": "bold grey50",
     "🌲": "bold bright_green",
     "🏮": "bold yellow on magenta",
     "📜": "bold yellow on dark_magenta",
     "ζ":  "bold cyan",
+    "G":  "bold green",        # goblin
+    "▓":  "bold grey50",       # camino cueva
+    "C":  "bold yellow",       # cofre
+    "💀": "bold white",
+    "⛏": "bold grey70",
 }
 
-# ─── Teclas ───────────────────────────────────────────────────────────────────
 TECLAS_MOVIMIENTO = ['w', 'a', 's', 'd']
-# e: interactuar  i: inventario  q: salir  o: opciones  v: volver
 TECLAS_ACCION     = ['e', 'i', 'q', 'o', 'v']
 
-# ─── Items del mapa (formato compatible con inventario.py) ────────────────────
 items_mapa = {
     "Pociones buenas": [
         {'id_item': 1, 'nombre': 'Pocion de Fuerza Grande', 'tipo': 'consumible', 'cantidad': 1, 'equipado': False},
@@ -111,18 +103,16 @@ items_mapa = {
     ],
 }
 
-# ─── Estado global del juego ──────────────────────────────────────────────────
-# hp/mp/hp_max/mp_max se sobreescriben desde main.py con los stats del personaje
 estado = {
-    "pos_p":          [1, 52],
+    "pos_p":          [1, 65],   # spawn mercado: fila 1, columna central
     "simbolo_debajo": "░",
     "hp":             100,
     "mp":             50,
     "hp_max":         100,
     "mp_max":         50,
-    "inventario":     [],   # lista de dicts — formato de inventario.py
+    "inventario":     [],
     "mapa_actual":    None,
     "numero_mapa":    1,
     "pasos_jugador":  0,
-    "personaje":      None, # dict completo devuelto por crear_personaje()
+    "personaje":      None,
 }
