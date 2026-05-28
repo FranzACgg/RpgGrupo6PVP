@@ -1,0 +1,4 @@
+#En este archivo solo estara como se visualizara el formato de la pantalla, para luego poder unirlo con lo que voy a decir acontinuacion
+#Se representara 3 recuadros en la pantalla (uno grando donde estara el ascii del enemigo) otro por debajo de la pantalla principal que representara los valores actualizados de stats de los personajes y otro en la izquierda inferior para las opciones como luchar habilidades, items, escapar
+#El tamanio sera como el del panel del mapa de prado
+#Solo dibuja como serian los paneles (En verde) y que se pueda acceder a esta pantalla cuando se choque con un enemigo, por ejemplo el slime o el duende.
