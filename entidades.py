@@ -25,7 +25,7 @@ from config import (
 
 def inicializar_slimes(mapa, contexto):
     """Dibuja los slimes en su posición inicial en el mapa dado."""
-    for slime in contexto["enemigos"]:
+    for slime in contexto["mundo"]["enemigos"]:
         f, c = slime["pos"]
         mapa[f][c] = simbolo_slime  # TODO # usar "tipo": "slime"
 
@@ -41,7 +41,7 @@ def mover_slimes(mapa, contexto):
     """
     direcciones = [(0, 1), (0, -1), (1, 0), (-1, 0), (0, 0)]
 
-    for slime in contexto["enemigos"]:
+    for slime in contexto["mundo"]["enemigos"]:
         f, c = slime["pos"]
         df, dc = random.choice(direcciones)
         nf, nc = f + df, c + dc

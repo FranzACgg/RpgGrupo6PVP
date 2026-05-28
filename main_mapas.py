@@ -37,7 +37,7 @@ def iniciar_mapas(contexto):
     """
     mapa = generar_mapa_prado()
     contexto["mundo"]["mapa_actual"] = mapa
-    contexto["enemigos"] = generar_enemigos_prado()
+    contexto["mundo"]["enemigos"] = generar_enemigos_prado()
     contexto["mundo"]["numero_mapa"] = 2
     contexto["mundo"]["pos_p"] = [1, 52]
     contexto["mundo"]["simbolo_debajo"] = "░"
@@ -63,10 +63,3 @@ def iniciar_mapa(contexto):
                 mover_slimes(contexto["mundo"]["mapa_actual"], contexto)
 
         cambio_de_mapa(contexto)
-
-
-# ─── Punto de entrada directo (para probar sin menú) ─────────────────────────
-
-if __name__ == "__main__":
-    iniciar_mapas()
-    iniciar_mapa()

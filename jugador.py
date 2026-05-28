@@ -110,24 +110,24 @@ def cambio_de_mapa(contexto):
             "¿Deseas entrar al Mercado? S/N: "
         ):  # TODO integrar input con rich
             _cargar(generar_mapa_mercado_total(), 1, [30, 128], "░")
-            contexto["enemigos"] = []
+            contexto["mundo"]["enemigos"] = []
 
     # Prado (2) → Cementerio (3): salida inferior
     elif numero_mapa == 2 and pos_p[0] == 89:
         if _confirmar("¿Deseas entrar al Cementerio? S/N: "):
             _cargar(generar_mapa_cementerio(), 3, [85, 73], simbolos_pasto[1])
-            contexto["enemigos"] = []
+            contexto["mundo"]["enemigos"] = []
 
     # Cementerio (3) → Prado (2): salida superior
     elif numero_mapa == 3 and pos_p[0] == 86:
         if _confirmar("¿Deseas volver al Prado? S/N: "):
             _cargar(generar_mapa_prado(), 2, [88, 65], "░")
-            contexto["enemigos"] = generar_enemigos_prado()
+            contexto["mundo"]["enemigos"] = generar_enemigos_prado()
             inicializar_slimes(contexto["mundo"]["mapa_actual"], contexto)
 
     # Mercado (1) → Prado (2): salida derecha
     elif numero_mapa == 1 and pos_p[1] == 129:
         if _confirmar("¿Deseas salir del Mercado? S/N: "):
             _cargar(generar_mapa_prado(), 2, [45, 1], "░")
-            contexto["enemigos"] = generar_enemigos_prado()
+            contexto["mundo"]["enemigos"] = generar_enemigos_prado()
             inicializar_slimes(contexto["mundo"]["mapa_actual"], contexto)
