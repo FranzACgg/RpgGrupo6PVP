@@ -1,5 +1,5 @@
-from estados import EXPLORACION
+from estados import CEMENTERIO
 
 
 def manejar_cementerio(contexto):
-    return EXPLORACION
+    contexto["estado_actual"] = CEMENTERIO

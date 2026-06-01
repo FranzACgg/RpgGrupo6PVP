@@ -1,5 +1,5 @@
-from estados import EXPLORACION
+from estados import COMBATE
 
 
 def manejar_combate(contexto):
-    return EXPLORACION
+    contexto["estado_actual"] = COMBATE

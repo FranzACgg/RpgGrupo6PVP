@@ -1,5 +1,5 @@
-from estados import EXPLORACION
+from estados import COLISEO
 
 
 def manejar_coliseo(contexto):
-    return EXPLORACION
+    contexto["estado_actual"] = COLISEO

@@ -4,9 +4,9 @@ import msvcrt  # Solo Windows. En Linux/Mac: import tty, sys, termios
 
 from config import TECLAS_MOVIMIENTO, TECLAS_ACCION
 from mapa_prado import generar_mapa_prado, generar_enemigos_prado
-from jugador import mover, cambio_de_mapa
-from entidades import mover_slimes, inicializar_slimes
-from ui import dibujar_juego_centrado, pantalla_menu_en_juego
+from jugador import mover
+from entidades import inicializar_slimes
+from ui import pantalla_menu_en_juego
 
 
 # ─── Entrada de teclado ───────────────────────────────────────────────────────
@@ -43,23 +43,3 @@ def iniciar_mapas(contexto):
     contexto["mundo"]["simbolo_debajo"] = "░"
     contexto["mundo"]["pasos_jugador"] = 0
     inicializar_slimes(mapa, contexto)
-
-
-# ─── Bucle principal ──────────────────────────────────────────────────────────
-
-
-def iniciar_mapa(contexto):
-    """Bucle principal del juego. Llamar después de iniciar_mapas()."""
-    while True:
-        dibujar_juego_centrado(contexto)
-
-        tecla = obtener_tecla()
-        procesar_entrada(tecla, contexto)
-
-        # Slimes solo se mueven en el Prado (mapa 2)
-        if contexto["mundo"]["numero_mapa"] == 2:
-            contexto["mundo"]["pasos_jugador"] += 1
-            if contexto["mundo"]["pasos_jugador"] % 2 == 0:
-                mover_slimes(contexto["mundo"]["mapa_actual"], contexto)
-
-        cambio_de_mapa(contexto)

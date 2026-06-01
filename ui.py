@@ -14,6 +14,7 @@ from config import (
     TECLAS_ACCION,
 )
 from inventario import manejar_inventario
+from estados import SALIR
 
 console = Console()
 
@@ -103,5 +104,5 @@ def pantalla_menu_en_juego(obtener_tecla_fn, contexto):
             en_menu = False
 
         elif opcion == TECLAS_ACCION[2]:  # q — salir
-            print("\nSaliendo del juego...")
-            exit()  # TODO(estados): reemplazar exit() por devolver SALIR hacia el orquestador
+            contexto["estado_actual"] = SALIR
+            en_menu = False
