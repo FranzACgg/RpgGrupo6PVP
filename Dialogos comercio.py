@@ -1,55 +1,66 @@
 import os
 
-# Función para limpiar la pantalla y que no se amontone el texto
+# Funcion para limpiar la consola y que el texto se vea prolijo
+# Es una funcion lambda que limpia la pantalla segun tu sistema (Windows o Linux)
 limpiar = lambda: os.system('cls' if os.name == 'nt' else 'clear')
 
-# Usamos una tupla para los dialogos porque son mensajes fijos que no necesitamos modificar
+# TUPLAS: Guardamos los mensajes fijos del comerciante (Unidad IV)
+# Posicion 0: Saludo, Posicion 1: Pala, Posicion 2: Comercio, Posicion 3: Despedida
 TEXTOS_MERCADER = (
-    "¡Hola! No te habia visto por este cementerio. ¿Buscas algo en especial?",
-    "¿Una pala? Dicen que hay una enterrada cerca de la tumba real, pero es muy vieja.",
+    "Hola! No te habia visto por este cementerio. Buscas algo en especial?",
+    "Una pala? Dicen que hay una enterrada cerca de la tumba real, pero es muy vieja.",
     "Si encontras tesoros, traelos aca. Yo te los cambio por buen oro.",
     "Suerte ahi afuera, la vas a necesitar."
 )
 
 def conversar_con_comerciante():
-    # Opciones que el jugador puede elegir
+    # Tupla con las opciones del menu
     opciones = ("Saludar", "Preguntar por la pala", "Hablar de comercio", "Irse")
     charlando = True
 
     while charlando:
         limpiar()
         print("=== TIENDA DEL CEMENTERIO ===")
-        print("Te acercas al mostrador del mercader.")
-        print("-" * 30)
-
-        # Recorremos la lista de opciones para mostrarlas numeradas
+        
+        # ARREGLO IMAGEN 1: Aqui ponemos la bienvenida usando el indice 0
+        # Al poner  evitamos que se vea la tupla entera con parentesis
+        print(f"Mercader: {TEXTOS_MERCADER}")
+        print("-" * 35)
+        
+        # Recorremos la tupla de opciones para mostrarlas (Clase 1)
         for i in range(len(opciones)):
             print(f"{i + 1}. {opciones[i]}")
 
-        # Este bloque 'try' intenta ejecutar el codigo y, si hay un error, lo atrapa
+        # Bloque try/except para capturar errores si el usuario no pone un numero (Clase 8)
         try:
-            # Pedimos el numero de opción al usuario
-            entrada = input("\n¿Que queres hacer? (Escribi el numero): ")
+            entrada = input("\nQue quieres hacer? (Escribi el numero): ")
             seleccion = int(entrada)
 
-            # Logica para decidir que responder según el número elegido
+            # ARREGLO IMAGEN 2: Usamos indices para responder una sola frase
             if seleccion == 1:
-                print(f"\nMercader: '{TEXTOS_MERCADER[0]}'")
+                # Mostramos solo el mensaje de la posicion 0
+                print(f"\nRespuesta: {TEXTOS_MERCADER}")
             elif seleccion == 2:
-                print(f"\nMercader: '{TEXTOS_MERCADER[1]}'")
+                # Mostramos solo el mensaje de la posicion 1
+                print(f"\nRespuesta: {TEXTOS_MERCADER[4]}")
             elif seleccion == 3:
-                print(f"\nMercader: '{TEXTOS_MERCADER[2]}'")
+                # Mostramos solo el mensaje de la posicion 2
+                print(f"\nRespuesta: {TEXTOS_MERCADER[5]}")
             elif seleccion == 4:
-                print(f"\nMercader: '{TEXTOS_MERCADER[3]}'")
-                charlando = False # Corta el bucle para salir de la charla
+                # Mostramos solo el mensaje de la posicion 3
+                print(f"\nRespuesta: {TEXTOS_MERCADER[6]}")
+                charlando = False # Cortamos el bucle para salir
             else:
-                # Si el numero no está entre 1 y 4, avisamos al usuario
-                print("\nEse número no está en las opciones.")
+                print("\nEse numero no esta en las opciones.")
 
             if charlando:
-                input("\n[Presioná Enter para seguir hablando]")
+                input("\n[Presiona Enter para continuar]")
 
-        # Si el usuario escribio una letra en vez de un numero, se ejecuta este aviso
+        # Si el usuario escribe una letra, el programa no se rompe y avisa del error
         except ValueError:
-            print("\nError: Tenes que ingresar el número de la opción (ejemplo: 1).")
-            input("[Presiona Enter para intentar de nuevo]")
+            print("\nError: Tenes que ingresar el numero de la opcion.")
+            input("[Presiona Enter para reintentar]")
+
+# Punto de inicio para ejecutar el sistema de dialogos
+if __name__ == "__main__":
+    conversar_con_comerciante()
