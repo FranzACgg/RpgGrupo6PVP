@@ -1,0 +1,7 @@
+EXPLORACION = "exploracion"
+COMBATE = "combate"
+CEMENTERIO = "cementerio"
+COLISEO = "coliseo"
+VICTORIA = "victoria"
+GAME_OVER = "game_over"
+SALIR = "salir"
