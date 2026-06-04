@@ -4,8 +4,10 @@
 from menu_pre_final import menu_principal
 from personajes import mostrar_seleccion_personaje, crear_personaje
 from inventario import crear_inventario
-from main_mapas import iniciar_mapas, iniciar_mapa
+from main_mapas import iniciar_mapas
 from config import crear_contexto
+from estados import EXPLORACION
+from motor import manejar_estados
 
 
 def main():
@@ -33,7 +35,8 @@ def main():
 
     # ── 5. Generar mapa inicial y arrancar ────────────────────────────────────
     iniciar_mapas(contexto)
-    iniciar_mapa(contexto)  # bucle principal — no retorna salvo exit()
+    contexto["estado_actual"] = EXPLORACION
+    manejar_estados(contexto)  # bucle principal
 
 
 if __name__ == "__main__":

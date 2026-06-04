@@ -2,8 +2,8 @@
 
 MAPA_REAL_ALTO  = 90
 MAPA_REAL_ANCHO = 130
-CAMARA_ALTO     = 20
-CAMARA_ANCHO    = 40
+CAMARA_ALTO = 20
+CAMARA_ANCHO = 40
 
 simbolos_pasto      = [",", ";", "'", "´"]
 simbolos_entorno    = [" ", "O", "#", "♣", "."]
@@ -77,34 +77,142 @@ TECLAS_ACCION     = ['e', 'i', 'q', 'o', 'v']
 # ─── Items del mapa ──────────────────────────────────────────────────────────
 items_mapa = {
     "Pociones buenas": [
-        {'id_item': 1, 'nombre': 'Pocion de Fuerza Grande', 'tipo': 'consumible', 'cantidad': 1, 'equipado': False},
-        {'id_item': 2, 'nombre': 'Pocion de HP pequeña',    'tipo': 'consumible', 'cantidad': 1, 'equipado': False},
-        {'id_item': 3, 'nombre': 'Pocion de HP Grande',     'tipo': 'consumible', 'cantidad': 1, 'equipado': False},
+        {
+            "id_item": 1,
+            "nombre": "Pocion de Fuerza Grande",
+            "tipo": "consumible",
+            "cantidad": 1,
+            "equipado": False,
+        },
+        {
+            "id_item": 2,
+            "nombre": "Pocion de HP pequeña",
+            "tipo": "consumible",
+            "cantidad": 1,
+            "equipado": False,
+        },
+        {
+            "id_item": 3,
+            "nombre": "Pocion de HP Grande",
+            "tipo": "consumible",
+            "cantidad": 1,
+            "equipado": False,
+        },
     ],
     "Accesorios buenas": [
-        {'id_item': 4, 'nombre': 'Gema de vida',    'tipo': 'equipable', 'cantidad': 1, 'equipado': False},
-        {'id_item': 5, 'nombre': 'Hacha de Mitril', 'tipo': 'equipable', 'cantidad': 1, 'equipado': False},
-        {'id_item': 6, 'nombre': 'Latigo con Puas', 'tipo': 'equipable', 'cantidad': 1, 'equipado': False},
+        {
+            "id_item": 4,
+            "nombre": "Gema de vida",
+            "tipo": "equipable",
+            "cantidad": 1,
+            "equipado": False,
+        },
+        {
+            "id_item": 5,
+            "nombre": "Hacha de Mitril",
+            "tipo": "equipable",
+            "cantidad": 1,
+            "equipado": False,
+        },
+        {
+            "id_item": 6,
+            "nombre": "Latigo con Puas",
+            "tipo": "equipable",
+            "cantidad": 1,
+            "equipado": False,
+        },
     ],
     "Equipamiento buenas": [
-        {'id_item': 7,  'nombre': 'Escudo de Obsidiana',          'tipo': 'equipable', 'cantidad': 1, 'equipado': False},
-        {'id_item': 8,  'nombre': 'Caso de Tungsteno',            'tipo': 'equipable', 'cantidad': 1, 'equipado': False},
-        {'id_item': 9,  'nombre': 'Pechera de escamas de Dragon', 'tipo': 'equipable', 'cantidad': 1, 'equipado': False},
+        {
+            "id_item": 7,
+            "nombre": "Escudo de Obsidiana",
+            "tipo": "equipable",
+            "cantidad": 1,
+            "equipado": False,
+        },
+        {
+            "id_item": 8,
+            "nombre": "Caso de Tungsteno",
+            "tipo": "equipable",
+            "cantidad": 1,
+            "equipado": False,
+        },
+        {
+            "id_item": 9,
+            "nombre": "Pechera de escamas de Dragon",
+            "tipo": "equipable",
+            "cantidad": 1,
+            "equipado": False,
+        },
     ],
     "Pociones malas": [
-        {'id_item': 10, 'nombre': 'Pocion Alucinogena',            'tipo': 'consumible', 'cantidad': 1, 'equipado': False},
-        {'id_item': 11, 'nombre': 'Pocion de Potencia/Impotencia', 'tipo': 'consumible', 'cantidad': 1, 'equipado': False},
-        {'id_item': 12, 'nombre': 'Pocion de I have no enemies',   'tipo': 'consumible', 'cantidad': 1, 'equipado': False},
+        {
+            "id_item": 10,
+            "nombre": "Pocion Alucinogena",
+            "tipo": "consumible",
+            "cantidad": 1,
+            "equipado": False,
+        },
+        {
+            "id_item": 11,
+            "nombre": "Pocion de Potencia/Impotencia",
+            "tipo": "consumible",
+            "cantidad": 1,
+            "equipado": False,
+        },
+        {
+            "id_item": 12,
+            "nombre": "Pocion de I have no enemies",
+            "tipo": "consumible",
+            "cantidad": 1,
+            "equipado": False,
+        },
     ],
     "Accesorios malas": [
-        {'id_item': 13, 'nombre': 'Escudo del Heroe ;)',          'tipo': 'equipable', 'cantidad': 1, 'equipado': False},
-        {'id_item': 14, 'nombre': 'Lanza Maldita',                'tipo': 'equipable', 'cantidad': 1, 'equipado': False},
-        {'id_item': 15, 'nombre': 'Espada de Doble Filo Maldita', 'tipo': 'equipable', 'cantidad': 1, 'equipado': False},
+        {
+            "id_item": 13,
+            "nombre": "Escudo del Heroe ;)",
+            "tipo": "equipable",
+            "cantidad": 1,
+            "equipado": False,
+        },
+        {
+            "id_item": 14,
+            "nombre": "Lanza Maldita",
+            "tipo": "equipable",
+            "cantidad": 1,
+            "equipado": False,
+        },
+        {
+            "id_item": 15,
+            "nombre": "Espada de Doble Filo Maldita",
+            "tipo": "equipable",
+            "cantidad": 1,
+            "equipado": False,
+        },
     ],
     "Equipamiento malas": [
-        {'id_item': 16, 'nombre': 'Collar Paralizante',   'tipo': 'equipable', 'cantidad': 1, 'equipado': False},
-        {'id_item': 17, 'nombre': 'Guantes Benevolentes', 'tipo': 'equipable', 'cantidad': 1, 'equipado': False},
-        {'id_item': 18, 'nombre': 'Casco de Dullahan',    'tipo': 'equipable', 'cantidad': 1, 'equipado': False},
+        {
+            "id_item": 16,
+            "nombre": "Collar Paralizante",
+            "tipo": "equipable",
+            "cantidad": 1,
+            "equipado": False,
+        },
+        {
+            "id_item": 17,
+            "nombre": "Guantes Benevolentes",
+            "tipo": "equipable",
+            "cantidad": 1,
+            "equipado": False,
+        },
+        {
+            "id_item": 18,
+            "nombre": "Casco de Dullahan",
+            "tipo": "equipable",
+            "cantidad": 1,
+            "equipado": False,
+        },
     ],
 }
 
@@ -112,6 +220,7 @@ items_mapa = {
 def crear_contexto():
     """Devuelve el dict de estado global del juego. Todo el juego lo pasa por parámetro."""
     return {
+        "estado_actual": None,
         "personaje":      None,   # dict completo de personajes.py
         "inventario":     [],     # lista de dicts del sistema de inventario.py
         "buffs_activos":  [],
@@ -126,6 +235,5 @@ def crear_contexto():
             "dim_ancho":      MAPA_REAL_ANCHO,
         },
         "progreso": {
-            "enemigos_derrotados": 0,
-        },
-    }
+            "enemigos_derrotados":  0,
+        }}
