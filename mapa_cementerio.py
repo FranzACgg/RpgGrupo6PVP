@@ -24,6 +24,7 @@ def _dibujar_valla_y_entrada_jugador(mapa):
                 mapa[f][c] = SIMBOLO_VALLA
 
     mapa[86][73] = simbolos_entorno[1]   # O — entrada desde el Prado
+    mapa[2][65]  = simbolos_entorno[1]   # O — salida al Coliseo (arriba)
 
 
 def _dibujar_senderos(mapa):

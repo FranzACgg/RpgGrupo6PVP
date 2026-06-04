@@ -8,41 +8,42 @@ from rich.align   import Align
 from config import (
     CAMARA_ALTO, CAMARA_ANCHO,
     MAPA_REAL_ALTO, MAPA_REAL_ANCHO,
-    ESTILOS, TECLAS_ACCION, estado,
+    ESTILOS, TECLAS_ACCION,
 )
 from inventario import manejar_inventario
+from mapa_cueva import CUEVA_ALTO, CUEVA_ANCHO
+from mapa_coliseo import COLISEO_ALTO, COLISEO_ANCHO
 
 console = Console()
 
-# Dimensiones de cámara para la cueva (más estrecha)
-from mapa_cueva import CUEVA_ALTO, CUEVA_ANCHO
-CAMARA_CUEVA_ALTO  = 15
-CAMARA_CUEVA_ANCHO = 30
+NOMBRES_MAPA = {1: "Mercado", 2: "Prado", 3: "Cementerio", 4: "Cueva", 5: "Coliseo"}
 
 
-def dibujar_juego_centrado():
+def dibujar_juego_centrado(contexto):
     os.system('cls' if os.name == 'nt' else 'clear')
 
-    pos_p       = estado["pos_p"]
-    mapa_actual = estado["mapa_actual"]
-    hp, hp_max  = estado["hp"],  estado["hp_max"]
-    mp, mp_max  = estado["mp"],  estado["mp_max"]
-    n           = estado["numero_mapa"]
+    mundo       = contexto["mundo"]
+    pos_p       = mundo["pos_p"]
+    mapa_actual = mundo["mapa_actual"]
+    n           = mundo["numero_mapa"]
+    p           = contexto["personaje"]
+    hp          = p["stats_actuales"]["hp"]
+    mp          = p["stats_actuales"]["mp"]
+    hp_max      = p["stats_base"]["hp"]
+    mp_max      = p["stats_base"]["mp"]
 
-    # Cámara adaptada al mapa
-    if n == 4:   # cueva
-        cam_alto  = CAMARA_CUEVA_ALTO
-        cam_ancho = CAMARA_CUEVA_ANCHO
-        mapa_alto = CUEVA_ALTO
-        mapa_ancho = CUEVA_ANCHO
+    if n == 4:
+        cam_alto, cam_ancho = 15, 30
+        m_alto,   m_ancho  = CUEVA_ALTO, CUEVA_ANCHO
+    elif n == 5:
+        cam_alto, cam_ancho = 20, 40
+        m_alto,   m_ancho  = COLISEO_ALTO, COLISEO_ANCHO
     else:
-        cam_alto  = CAMARA_ALTO
-        cam_ancho = CAMARA_ANCHO
-        mapa_alto = MAPA_REAL_ALTO
-        mapa_ancho = MAPA_REAL_ANCHO
+        cam_alto, cam_ancho = CAMARA_ALTO, CAMARA_ANCHO
+        m_alto,   m_ancho  = MAPA_REAL_ALTO, MAPA_REAL_ANCHO
 
-    inicio_f = max(0, min(pos_p[0] - cam_alto  // 2, mapa_alto  - cam_alto))
-    inicio_c = max(0, min(pos_p[1] - cam_ancho // 2, mapa_ancho - cam_ancho))
+    inicio_f = max(0, min(pos_p[0] - cam_alto  // 2, m_alto  - cam_alto))
+    inicio_c = max(0, min(pos_p[1] - cam_ancho // 2, m_ancho - cam_ancho))
 
     filas = []
     for f in range(inicio_f, inicio_f + cam_alto):
@@ -53,17 +54,12 @@ def dibujar_juego_centrado():
             fila_str += f"[{color}]{char}[/] "
         filas.append(fila_str)
 
-    nombre_personaje = ""
-    if estado["personaje"]:
-        p = estado["personaje"]
-        nombre_personaje = f" — {p['nombre']} ({p['clase']})"
-
-    nombres_mapa = {1: "Mercado", 2: "Prado", 3: "Cementerio", 4: "Cueva"}
-    titulo_mapa  = nombres_mapa.get(n, "?")
+    nombre_mapa = NOMBRES_MAPA.get(n, "?")
+    titulo = f"[bold yellow]GLASSTION · {nombre_mapa} — {p['nombre']} ({p['clase']})[/]"
 
     pantalla = Panel(
         "\n".join(filas),
-        title    = f"[bold yellow]GLASSTION · {titulo_mapa}{nombre_personaje}[/]",
+        title    = titulo,
         subtitle = f"[bold red]HP: {hp}/{hp_max}[/] | [bold blue]MP: {mp}/{mp_max}[/]",
         border_style = "bright_blue",
         expand   = False,
@@ -73,7 +69,7 @@ def dibujar_juego_centrado():
                         height=console.size.height))
 
 
-def pantalla_menu_en_juego(obtener_tecla_fn):
+def pantalla_menu_en_juego(obtener_tecla_fn, contexto):
     en_menu = True
     while en_menu:
         os.system('cls' if os.name == 'nt' else 'clear')
@@ -88,7 +84,7 @@ def pantalla_menu_en_juego(obtener_tecla_fn):
         opcion = obtener_tecla_fn()
 
         if opcion == TECLAS_ACCION[1]:
-            manejar_inventario(estado["inventario"])
+            manejar_inventario(contexto["inventario"])
         elif opcion == "v":
             en_menu = False
         elif opcion == TECLAS_ACCION[2]:

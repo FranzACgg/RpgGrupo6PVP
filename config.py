@@ -1,24 +1,26 @@
-# config.py — Constantes, símbolos, estilos y estado compartido
+# config.py — Constantes, símbolos, estilos y fábrica de contexto
 
 MAPA_REAL_ALTO  = 90
 MAPA_REAL_ANCHO = 130
 CAMARA_ALTO     = 20
 CAMARA_ANCHO    = 40
 
-simbolos_pasto   = [",", ";", "'", "´"]
-simbolos_entorno = [" ", "O", "#", "♣", "."]
+simbolos_pasto      = [",", ";", "'", "´"]
+simbolos_entorno    = [" ", "O", "#", "♣", "."]
 simbolos_especiales = ["P", "*"]
 
 simbolos_entornos_no_remplazables = [
     "✿", "❀", "⚜", "=", "🪨", "░", "≈", "~",
     "┌", "┐", "└", "┘", "─", "│", "▒", "N", "[", "]",
-    "+",        # valla cementerio (FIX: era 🚧)
+    "+",        # valla cementerio
     "🪦", "🗿", "🌲", "🏮", "📜",
     "ζ",        # slime
-    "G",        # goblin (ASCII, cueva)
+    "G",        # goblin
     "▓",        # camino cueva
     "C",        # cofre cueva
-    "💀", "⛏", # decoración cueva
+    "💀", "⛏",
+    "J",        # jefe coliseo
+    "I",        # columna coliseo
 ]
 
 simbolo_slime  = "ζ"
@@ -53,23 +55,26 @@ ESTILOS = {
     "┘":  "bold grey37",
     "[":  "bold white",
     "]":  "bold white",
-    "+":  "bold yellow",       # valla cementerio
+    "+":  "bold yellow",
     "🪦": "bold white",
     "🗿": "bold grey50",
     "🌲": "bold bright_green",
     "🏮": "bold yellow on magenta",
     "📜": "bold yellow on dark_magenta",
     "ζ":  "bold cyan",
-    "G":  "bold green",        # goblin
-    "▓":  "bold grey50",       # camino cueva
-    "C":  "bold yellow",       # cofre
+    "G":  "bold green",
+    "▓":  "bold grey50",
+    "C":  "bold yellow",
     "💀": "bold white",
     "⛏": "bold grey70",
+    "J":  "bold red on dark_red",   # jefe coliseo
+    "I":  "bold grey50",             # columna coliseo
 }
 
 TECLAS_MOVIMIENTO = ['w', 'a', 's', 'd']
 TECLAS_ACCION     = ['e', 'i', 'q', 'o', 'v']
 
+# ─── Items del mapa ──────────────────────────────────────────────────────────
 items_mapa = {
     "Pociones buenas": [
         {'id_item': 1, 'nombre': 'Pocion de Fuerza Grande', 'tipo': 'consumible', 'cantidad': 1, 'equipado': False},
@@ -103,16 +108,24 @@ items_mapa = {
     ],
 }
 
-estado = {
-    "pos_p":          [1, 65],   # spawn mercado: fila 1, columna central
-    "simbolo_debajo": "░",
-    "hp":             100,
-    "mp":             50,
-    "hp_max":         100,
-    "mp_max":         50,
-    "inventario":     [],
-    "mapa_actual":    None,
-    "numero_mapa":    1,
-    "pasos_jugador":  0,
-    "personaje":      None,
-}
+
+def crear_contexto():
+    """Devuelve el dict de estado global del juego. Todo el juego lo pasa por parámetro."""
+    return {
+        "personaje":      None,   # dict completo de personajes.py
+        "inventario":     [],     # lista de dicts del sistema de inventario.py
+        "buffs_activos":  [],
+        "mundo": {
+            "pos_p":          [1, 52],
+            "simbolo_debajo": "░",
+            "mapa_actual":    None,
+            "numero_mapa":    1,
+            "pasos_jugador":  0,
+            "enemigos":       [],   # lista de dicts {tipo, pos, debajo, hp_actual}
+            "dim_alto":       MAPA_REAL_ALTO,
+            "dim_ancho":      MAPA_REAL_ANCHO,
+        },
+        "progreso": {
+            "enemigos_derrotados": 0,
+        },
+    }

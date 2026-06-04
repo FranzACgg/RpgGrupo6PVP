@@ -1,8 +1,6 @@
 # entidades.py — Mobs: Slimes (Prado) y Goblins (Cueva)
-#
-#  v2: stats_slime() y stats_goblin() ahora retornan dicts completos
-#      con hp, fuerza, defensa, agilidad y habilidades.
-#      pantalla_batalla.py los lee desde STATS_ENEMIGOS (centralizado allí).
+# Toda la info de mobs vive en contexto["mundo"]["enemigos"]
+# Cada entrada: {"tipo": "slime"|"goblin", "pos": [f,c], "debajo": char, "hp_actual": int}
 
 import random
 from config import (
@@ -10,169 +8,133 @@ from config import (
     simbolos_pasto, simbolo_slime, simbolo_goblin,
 )
 
-# ─── Slimes del Prado ─────────────────────────────────────────────────────────
-lista_slimes = [
-    {"pos": [40, 20],  "debajo": ","},
-    {"pos": [50, 60],  "debajo": ","},
-    {"pos": [30, 100], "debajo": "░"},
-]
-
-# ─── Goblins de la Cueva ──────────────────────────────────────────────────────
-lista_goblins = []
-
-
-def stats_slime():
-    """
-    Retorna el diccionario de stats del Slime.
-    Vida: 50 | Fuerza: 10 | Defensa: 5 | Agilidad: 20%
-    Habilidades:
-      - Disparo Ácido  : doble daño, 30% de probabilidad
-      - Cuerpo Ácido   : 20% de destruir un arma equipada
-    """
-    return {
-        "nombre"    : "Slime",
-        "hp_max"    : 50,
-        "fuerza"    : 10,
-        "defensa"   : 5,
-        "agilidad"  : 20,
+# ─── Stats de referencia (hp_max, fuerza, defensa, agilidad, habilidades) ─────
+# pantalla_batalla.py los usa para construir la pelea.
+STATS_ENEMIGOS = {
+    "slime": {
+        "nombre":    "Slime",
+        "simbolo":   simbolo_slime,   # ζ
+        "hp_max":    50,
+        "fuerza":    35,
+        "defensa":    5,
+        "agilidad":  20,
         "habilidades": [
-            {
-                "nombre"      : "Disparo Ácido",
-                "tipo"        : "Ataque",
-                "descripcion" : "Hace el doble de daño",
-                "valor"       : 2.0,
-                "probabilidad": 30,
-            },
-            {
-                "nombre"      : "Cuerpo Ácido",
-                "tipo"        : "Maldición",
-                "descripcion" : "20% de probabilidad de destruir un arma equipada",
-                "valor"       : 0,
-                "probabilidad": 20,
-            },
+            {"nombre": "Disparo Ácido", "tipo": "Ataque",    "valor": 2.0, "probabilidad": 30,
+             "descripcion": "Doble daño"},
+            {"nombre": "Cuerpo Ácido",  "tipo": "Maldición", "valor": 0,   "probabilidad": 20,
+             "descripcion": "20% de destruir un arma equipada"},
         ],
-    }
-
-
-def stats_goblin():
-    """
-    Retorna el diccionario de stats del Goblin.
-    Vida: 100 | Fuerza: 20 | Defensa: 8 | Agilidad: 15%
-    Habilidades:
-      - Daga Rompe Escudos : reduce a 0 el bonus de defensa del escudo equipado
-      - Modo Berserker     : 40% de atacar 2 veces, 20% de atacar 3 veces
-    """
-    return {
-        "nombre"    : "Goblin",
-        "hp_max"    : 100,
-        "fuerza"    : 20,
-        "defensa"   : 8,
-        "agilidad"  : 15,
+    },
+    "goblin": {
+        "nombre":    "Goblin",
+        "simbolo":   simbolo_goblin,  # G
+        "hp_max":    80,
+        "fuerza":    40,
+        "defensa":    8,
+        "agilidad":  15,
         "habilidades": [
-            {
-                "nombre"      : "Daga Rompe Escudos",
-                "tipo"        : "Maldición",
-                "descripcion" : "Reduce a 0 el bono de defensa del escudo equipado",
-                "valor"       : 0,
-                "probabilidad": 35,
-            },
-            {
-                "nombre"      : "Modo Berserker",
-                "tipo"        : "Ataque",
-                "descripcion" : "40% de atacar 2 veces, 20% de atacar 3 veces",
-                "valor"       : 1.0,
-                "probabilidad": 60,
-            },
+            {"nombre": "Daga Rompe Escudos", "tipo": "Maldición", "valor": 0,   "probabilidad": 35,
+             "descripcion": "Anula el bono de defensa del escudo equipado"},
+            {"nombre": "Modo Berserker",     "tipo": "Ataque",    "valor": 1.0, "probabilidad": 60,
+             "descripcion": "40% de atacar 2 veces, 20% de atacar 3 veces"},
         ],
-    }
+    },
+    "jefe": {
+        "nombre":    "El Campeón",
+        "simbolo":   "J",
+        "hp_max":    200,
+        "fuerza":    55,
+        "defensa":   20,
+        "agilidad":  25,
+        "habilidades": [
+            {"nombre": "Golpe Devastador", "tipo": "Ataque",    "valor": 2.0,  "probabilidad": 40,
+             "descripcion": "El doble del daño normal"},
+            {"nombre": "Torbellino",       "tipo": "Ataque",    "valor": 1.5,  "probabilidad": 30,
+             "descripcion": "Ataca 3 veces con daño reducido"},
+            {"nombre": "Grito de Arena",   "tipo": "Maldición", "valor": 0,    "probabilidad": 25,
+             "descripcion": "Rompe el escudo del jugador"},
+        ],
+    },
+}
 
 
-def inicializar_slimes(mapa):
-    """Dibuja los slimes en su posición inicial."""
-    for slime in lista_slimes:
-        f, c = slime["pos"]
-        mapa[f][c] = simbolo_slime
+def generar_enemigos_prado():
+    """Devuelve la lista inicial de enemigos del Prado con hp_actual completo."""
+    hp = STATS_ENEMIGOS["slime"]["hp_max"]
+    return [
+        {"tipo": "slime", "pos": [40, 20],  "debajo": ",", "hp_actual": hp},
+        {"tipo": "slime", "pos": [50, 60],  "debajo": ",", "hp_actual": hp},
+        {"tipo": "slime", "pos": [30, 100], "debajo": "░", "hp_actual": hp},
+    ]
 
 
-def mover_slimes(mapa):
-    """Mueve cada slime una celda al azar (sin pisar al jugador)."""
-    direcciones = [(0, 1), (0, -1), (1, 0), (-1, 0), (0, 0)]
+def generar_enemigos_cueva():
+    """Devuelve la lista inicial de goblins de la Cueva con hp_actual completo."""
+    hp = STATS_ENEMIGOS["goblin"]["hp_max"]
+    return [
+        {"tipo": "goblin", "pos": [10, 10], "debajo": ".", "hp_actual": hp},
+        {"tipo": "goblin", "pos": [20, 35], "debajo": ".", "hp_actual": hp},
+        {"tipo": "goblin", "pos": [30, 20], "debajo": ".", "hp_actual": hp},
+        {"tipo": "goblin", "pos": [15, 45], "debajo": ".", "hp_actual": hp},
+    ]
 
-    for slime in lista_slimes:
-        f, c = slime["pos"]
-        df, dc = random.choice(direcciones)
+
+def generar_enemigo_coliseo():
+    """Un único jefe en el centro del coliseo."""
+    hp = STATS_ENEMIGOS["jefe"]["hp_max"]
+    return [
+        {"tipo": "jefe", "pos": [25, 40], "debajo": "░", "hp_actual": hp},
+    ]
+
+
+def inicializar_enemigos(mapa, contexto):
+    """Dibuja todos los enemigos del contexto en el mapa."""
+    for en in contexto["mundo"]["enemigos"]:
+        f, c = en["pos"]
+        simbolo = STATS_ENEMIGOS[en["tipo"]]["simbolo"]
+        mapa[f][c] = simbolo
+
+
+def mover_enemigos(mapa, contexto):
+    """
+    Mueve cada enemigo una celda al azar.
+    No pisa al jugador ('P'), paredes ni otros enemigos.
+    """
+    alto  = contexto["mundo"]["dim_alto"]
+    ancho = contexto["mundo"]["dim_ancho"]
+    dirs  = [(0, 1), (0, -1), (1, 0), (-1, 0), (0, 0)]
+    celdas_libres = simbolos_pasto + ["░", "▓", "."]
+
+    for en in contexto["mundo"]["enemigos"]:
+        f, c  = en["pos"]
+        df, dc = random.choice(dirs)
         nf, nc = f + df, c + dc
 
-        if not (0 <= nf < MAPA_REAL_ALTO and 0 <= nc < MAPA_REAL_ANCHO):
+        if not (0 <= nf < alto and 0 <= nc < ancho):
             continue
 
-        celda_destino = mapa[nf][nc]
-        if celda_destino not in simbolos_pasto and celda_destino != "░":
+        celda = mapa[nf][nc]
+        if celda not in celdas_libres:
             continue
 
-        mapa[f][c]       = slime["debajo"]
-        slime["debajo"]  = celda_destino
-        slime["pos"]     = [nf, nc]
-        mapa[nf][nc]     = simbolo_slime
+        mapa[f][c]  = en["debajo"]
+        en["debajo"] = celda
+        en["pos"]    = [nf, nc]
+        mapa[nf][nc] = STATS_ENEMIGOS[en["tipo"]]["simbolo"]
 
 
-def verificar_combate_slime(pos_jugador):
-    """Devuelve el slime si el jugador está en la misma celda, None si no."""
-    for slime in lista_slimes:
-        if slime["pos"] == pos_jugador:
-            return slime
+def buscar_enemigo_en(pos, contexto):
+    """Devuelve el primer enemigo en la posición dada, o None."""
+    for en in contexto["mundo"]["enemigos"]:
+        if en["pos"] == list(pos):
+            return en
     return None
 
 
-def eliminar_slime(slime, mapa):
-    """Elimina un slime del mapa y de la lista tras ser derrotado."""
-    f, c = slime["pos"]
-    mapa[f][c] = slime["debajo"]
-    if slime in lista_slimes:
-        lista_slimes.remove(slime)
-
-
-# ─── Goblins (cueva) ──────────────────────────────────────────────────────────
-from mapa_cueva import CUEVA_ALTO, CUEVA_ANCHO, SIMBOLO_GOBLIN, SIMBOLO_PISO
-
-
-def cargar_goblins(lista):
-    """Reemplaza la lista de goblins con la generada al crear el mapa cueva."""
-    global lista_goblins
-    lista_goblins = lista
-
-
-def mover_goblins(mapa):
-    """Mueve goblins en la cueva (igual lógica que slimes)."""
-    direcciones = [(0, 1), (0, -1), (1, 0), (-1, 0), (0, 0)]
-
-    for goblin in lista_goblins:
-        f, c = goblin["pos"]
-        df, dc = random.choice(direcciones)
-        nf, nc = f + df, c + dc
-
-        if not (0 <= nf < CUEVA_ALTO and 0 <= nc < CUEVA_ANCHO):
-            continue
-
-        celda_destino = mapa[nf][nc]
-        if celda_destino not in (SIMBOLO_PISO, "▓"):
-            continue
-
-        mapa[f][c]        = goblin["debajo"]
-        goblin["debajo"]  = celda_destino
-        goblin["pos"]     = [nf, nc]
-        mapa[nf][nc]      = SIMBOLO_GOBLIN
-
-
-def verificar_combate_goblin(pos_jugador):
-    for g in lista_goblins:
-        if g["pos"] == list(pos_jugador):
-            return g
-    return None
-
-
-def eliminar_goblin(goblin, mapa):
-    f, c = goblin["pos"]
-    mapa[f][c] = goblin["debajo"]
-    if goblin in lista_goblins:
-        lista_goblins.remove(goblin)
+def eliminar_enemigo(enemigo, mapa, contexto):
+    """Elimina el enemigo del mapa y de la lista de enemigos."""
+    f, c = enemigo["pos"]
+    mapa[f][c] = enemigo["debajo"]
+    if enemigo in contexto["mundo"]["enemigos"]:
+        contexto["mundo"]["enemigos"].remove(enemigo)
+    contexto["progreso"]["enemigos_derrotados"] += 1

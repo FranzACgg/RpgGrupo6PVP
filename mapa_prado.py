@@ -2,8 +2,11 @@
 
 import random
 from config import (
-    MAPA_REAL_ALTO, MAPA_REAL_ANCHO,
-    simbolos_entorno, simbolos_pasto, simbolos_especiales,
+    MAPA_REAL_ALTO,
+    MAPA_REAL_ANCHO,
+    simbolos_entorno,
+    simbolos_pasto,
+    simbolos_especiales,
 )
 from estructuras import (
     generar_cueva,
@@ -13,6 +16,14 @@ from estructuras import (
     elementos_decorativos,
     elementos_interactuables,
 )
+
+
+def generar_enemigos_prado():
+    return [
+        {"tipo": "slime", "pos": [40, 20], "debajo": "."},
+        {"tipo": "slime", "pos": [50, 60], "debajo": ","},
+        {"tipo": "slime", "pos": [30, 100], "debajo": "░"},
+    ]
 
 
 def generar_mapa_prado():
@@ -38,8 +49,13 @@ def generar_mapa_prado():
     # 2. Borde de tréboles y relleno de pasto
     for f in range(MAPA_REAL_ALTO):
         for c in range(MAPA_REAL_ANCHO):
-            if f == 0 or f == MAPA_REAL_ALTO - 1 or c == 0 or c == MAPA_REAL_ANCHO - 1:
-                mapa[f][c] = simbolos_entorno[3]   # ♣
+            if (
+                f == 0
+                or f == MAPA_REAL_ALTO - 1
+                or c == 0
+                or c == MAPA_REAL_ANCHO - 1
+            ):
+                mapa[f][c] = simbolos_entorno[3]  # ♣
             elif mapa[f][c] == simbolos_entorno[0]:
                 mapa[f][c] = random.choice(simbolos_pasto)
 
@@ -51,7 +67,7 @@ def generar_mapa_prado():
     generar_caminos_principales(mapa)
 
     # 5. Posición inicial del jugador
-    mapa[1][52] = simbolos_especiales[0]   # P
+    mapa[1][52] = simbolos_especiales[0]  # P
 
     # 6. Estructuras
     generar_cueva(mapa, 10, 10, 6, 4)

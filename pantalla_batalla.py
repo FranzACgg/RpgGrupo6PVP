@@ -1,30 +1,20 @@
-# pantalla_batalla.py — Sistema de combate por turnos (RPG) v3
-#
-#  Mejoras sobre v2:
-#  ─ Stats completos del personaje en el panel (fuerza, defensa, agilidad, suerte…)
-#  ─ Bonificaciones de items equipados mostradas como +X en verde
-#  ─ Esquiva del jugador y del enemigo según agilidad (texto en pantalla)
-#  ─ Tipo de habilidad mostrado por texto ("Ataque físico", "Maldición", etc.)
-#  ─ Stats y habilidades del enemigo (slime / goblin) integrados
-#  ─ Items consumibles usables en batalla (curan HP/MP)
-#  ─ Habilidades de personaje funcionales en batalla
-#  ─ Habilidades especiales de mobs (Disparo Ácido, Modo Berserker, etc.)
+# pantalla_batalla.py — Sistema de combate por turnos (RPG)
+# ARQUITECTURA: recibe contexto como parámetro, no usa estado global.
 
 import os
 import random
 
-from rich.console  import Console
-from rich.panel    import Panel
-from rich.columns  import Columns
-from rich.align    import Align
-from rich.text     import Text
-from rich.table    import Table
+from rich.console import Console
+from rich.panel   import Panel
+from rich.columns import Columns
+from rich.align   import Align
 
-from config import estado
+from config import CAMARA_ALTO
+from entidades import STATS_ENEMIGOS, eliminar_enemigo
 
 console = Console()
 
-# ─── ASCII art de enemigos ────────────────────────────────────────────────────
+# ─── ASCII art ───────────────────────────────────────────────────────────────
 
 ASCII_SLIME = r"""
       .-~~~~-.
@@ -38,7 +28,7 @@ ASCII_SLIME = r"""
 ASCII_GOBLIN = r"""
       _____
    <=( +.+ )=>
-      [ O ]
+      [ G ]
      /|   |\
     o L   L o
 """
@@ -50,557 +40,429 @@ ASCII_DEFAULT = r"""
        ---
 """
 
-ARTE_ENEMIGO = {
-    "ζ": ASCII_SLIME,
-    "G": ASCII_GOBLIN,
-}
+ASCII_JEFE = r"""
+  /\___/\
+ (  >.<  )
+  ) J J (
+ (________)
+  |  |  |
+"""
+_ARTE = {"slime": ASCII_SLIME, "goblin": ASCII_GOBLIN, "jefe": ASCII_JEFE}
 
-# ─── Stats de enemigos ────────────────────────────────────────────────────────
-
-STATS_ENEMIGOS = {
-    "ζ": {   # Slime
-        "nombre"    : "Slime",
-        "hp_max"    : 50,
-        "fuerza"    : 10,
-        "defensa"   : 5,
-        "agilidad"  : 20,   # % de probabilidad de esquivar
-        "habilidades": [
-            {
-                "nombre"     : "Disparo Ácido",
-                "tipo"       : "Ataque",
-                "descripcion": "Disparo ácido que hace el doble de daño",
-                "valor"      : 2.0,   # multiplicador
-                "probabilidad": 30,
-            },
-            {
-                "nombre"      : "Cuerpo Ácido",
-                "tipo"        : "Maldición",
-                "descripcion" : "20% de probabilidad de destruir un arma equipada",
-                "valor"       : 0,
-                "probabilidad": 20,
-            },
-        ],
-    },
-    "G": {   # Goblin
-        "nombre"    : "Goblin",
-        "hp_max"    : 100,
-        "fuerza"    : 20,
-        "defensa"   : 8,
-        "agilidad"  : 15,   # % de probabilidad de esquivar
-        "habilidades": [
-            {
-                "nombre"      : "Daga Rompe Escudos",
-                "tipo"        : "Maldición",
-                "descripcion" : "Reduce a 0 el bono de defensa del escudo equipado",
-                "valor"       : 0,
-                "probabilidad": 35,
-            },
-            {
-                "nombre"      : "Modo Berserker",
-                "tipo"        : "Ataque",
-                "descripcion" : "40% de atacar 2 veces, 20% de atacar 3 veces",
-                "valor"       : 1.0,
-                "probabilidad": 60,
-            },
-        ],
-    },
-}
-
-# ─── Catálogo de items (efectos en stats) ────────────────────────────────────
-#  Cada item equipable puede tener "bonus_stats": {stat: valor}
-#  Los items consumibles tienen "efecto": {"hp": X, "mp": X}
-
+# ─── Catálogo de items (bonus_stats y efecto) ─────────────────────────────────
 CATALOGO_ITEMS = {
-    1:  {"nombre": "Pocion de Fuerza Grande",          "tipo": "consumible", "efecto": {"fuerza": 20}},
-    2:  {"nombre": "Pocion de HP pequeña",             "tipo": "consumible", "efecto": {"hp": 50}},
-    3:  {"nombre": "Pocion de HP Grande",              "tipo": "consumible", "efecto": {"hp": 100}},
-    4:  {"nombre": "Gema de vida",                     "tipo": "equipable",  "bonus_stats": {"hp": 30}},
-    5:  {"nombre": "Hacha de Mitril",                  "tipo": "equipable",  "bonus_stats": {"fuerza": 25}},
-    6:  {"nombre": "Latigo con Puas",                  "tipo": "equipable",  "bonus_stats": {"fuerza": 15, "agilidad": 10}},
-    7:  {"nombre": "Escudo de Obsidiana",              "tipo": "equipable",  "bonus_stats": {"defensa": 30}},
-    8:  {"nombre": "Casco de Tungsteno",               "tipo": "equipable",  "bonus_stats": {"defensa": 15, "hp": 20}},
-    9:  {"nombre": "Pechera de escamas de Dragon",     "tipo": "equipable",  "bonus_stats": {"defensa": 40, "hp": 50}},
-    10: {"nombre": "Pocion Alucinogena",               "tipo": "consumible", "efecto": {"mp": -30, "hp": -20}},
-    11: {"nombre": "Pocion de Potencia/Impotencia",    "tipo": "consumible", "efecto": {"fuerza": 30}},  # al azar ±
-    12: {"nombre": "Pocion de I have no enemies",      "tipo": "consumible", "efecto": {"defensa": -50}},
-    13: {"nombre": "Escudo del Héroe ;)",              "tipo": "equipable",  "bonus_stats": {"defensa": -10}},
-    14: {"nombre": "Lanza Maldita",                    "tipo": "equipable",  "bonus_stats": {"fuerza": 35, "hp": -30}},
-    15: {"nombre": "Espada de Doble Filo Maldita",     "tipo": "equipable",  "bonus_stats": {"fuerza": 50, "defensa": -20}},
-    16: {"nombre": "Collar Paralizante",               "tipo": "equipable",  "bonus_stats": {"agilidad": -15}},
-    17: {"nombre": "Guantes Benevolentes",             "tipo": "equipable",  "bonus_stats": {"fuerza": -20}},
-    18: {"nombre": "Casco de Dullahan",                "tipo": "equipable",  "bonus_stats": {"defensa": 20, "suerte": 15}},
+    1:  {"tipo": "consumible", "efecto": {"hp": 50}},
+    2:  {"tipo": "consumible", "efecto": {"hp": 30}},
+    3:  {"tipo": "consumible", "efecto": {"hp": 100}},
+    4:  {"tipo": "equipable",  "bonus_stats": {"hp": 30}},
+    5:  {"tipo": "equipable",  "bonus_stats": {"fuerza": 25}},
+    6:  {"tipo": "equipable",  "bonus_stats": {"fuerza": 15, "agilidad": 10}},
+    7:  {"tipo": "equipable",  "bonus_stats": {"defensa": 30}},
+    8:  {"tipo": "equipable",  "bonus_stats": {"defensa": 15, "hp": 20}},
+    9:  {"tipo": "equipable",  "bonus_stats": {"defensa": 40, "hp": 50}},
+    10: {"tipo": "consumible", "efecto": {"mp": -30, "hp": -20}},
+    11: {"tipo": "consumible", "efecto": {"fuerza": 30}},
+    12: {"tipo": "consumible", "efecto": {"defensa": -50}},
+    13: {"tipo": "equipable",  "bonus_stats": {"defensa": -10}},
+    14: {"tipo": "equipable",  "bonus_stats": {"fuerza": 35, "hp": -30}},
+    15: {"tipo": "equipable",  "bonus_stats": {"fuerza": 50, "defensa": -20}},
+    16: {"tipo": "equipable",  "bonus_stats": {"agilidad": -15}},
+    17: {"tipo": "equipable",  "bonus_stats": {"fuerza": -20}},
+    18: {"tipo": "equipable",  "bonus_stats": {"defensa": 20, "suerte": 15}},
 }
 
-# ─── Helpers ──────────────────────────────────────────────────────────────────
+# ─── Helpers ─────────────────────────────────────────────────────────────────
 
 def _barra(actual, maximo, largo=12):
     llenos = round((actual / maximo) * largo) if maximo > 0 else 0
-    vacios  = largo - llenos
-    return "█" * llenos + "░" * vacios
+    return "█" * llenos + "░" * (largo - llenos)
 
 
-def _calcular_stats_con_items(personaje, inventario):
-    """Retorna dict con stats base + bonus de items equipados."""
-    clase = personaje.get("clase", "")
+def _tipo_texto(tipo):
+    return {"Ataque": "⚔  Ataque", "Maldición": "💀 Maldición",
+            "Maldicion": "💀 Maldición", "Defensa": "🛡  Defensa",
+            "Mejora": "✨ Mejora", "fisico": "⚔  Físico",
+            "magico": "✨ Mágico"}.get(tipo, tipo)
+
+
+def _stats_con_items(personaje, inventario, escudo_roto=False):
+    """
+    Devuelve (stats_totales, bonus_dict).
+    stats_totales = stats_base + bonus de items equipados (escudo ignorado si roto).
+    """
     from personajes import CLASES_DISPONIBLES
-    base = CLASES_DISPONIBLES.get(clase, {}).get("stats_base", {}).copy()
-
-    # Asegurar que todos los stats existen
+    base  = CLASES_DISPONIBLES.get(personaje["clase"], {}).get("stats_base", {}).copy()
     for s in ("fuerza", "defensa", "agilidad", "suerte", "magia", "espiritu"):
         base.setdefault(s, 0)
 
     bonus = {s: 0 for s in base}
-
-    items_equipados = [it for it in inventario if it.get("equipado")]
-    for it in items_equipados:
-        info = CATALOGO_ITEMS.get(it["id_item"], {})
-        for stat, val in info.get("bonus_stats", {}).items():
+    for it in inventario:
+        if not it.get("equipado"):
+            continue
+        info  = CATALOGO_ITEMS.get(it["id_item"], {})
+        bstat = info.get("bonus_stats", {})
+        for stat, val in bstat.items():
+            if stat == "defensa" and escudo_roto:
+                continue
             bonus[stat] = bonus.get(stat, 0) + val
 
-    return base, bonus, items_equipados
+    totales = {k: max(0, base[k] + bonus[k]) for k in base}
+    return totales, bonus
 
 
-def _intentar_esquivar(agilidad):
-    """Devuelve True si el personaje/enemigo esquiva según su agilidad (%)."""
-    return random.randint(1, 100) <= agilidad
+def _esquivar(agilidad):
+    return random.randint(1, 100) <= max(5, min(50, agilidad))
 
+# ─── Paneles ─────────────────────────────────────────────────────────────────
 
-def _tipo_habilidad_texto(tipo):
-    textos = {
-        "Ataque"  : "⚔️  Ataque",
-        "Defensa" : "🛡️  Defensa",
-        "Mejora"  : "✨ Mejora",
-        "Maldicion": "💀 Maldición",
-        "Maldición": "💀 Maldición",
-        "Curación": "💚 Curación",
-    }
-    return textos.get(tipo, tipo)
-
-# ─── Paneles de la UI ────────────────────────────────────────────────────────
-
-def _panel_enemigo(simbolo, stats_mob, hp_actual):
-    arte = ARTE_ENEMIGO.get(simbolo, ASCII_DEFAULT)
-    nombre = stats_mob["nombre"]
-    hp_max = stats_mob["hp_max"]
+def _panel_enemigo(tipo_mob, hp_actual):
+    datos  = STATS_ENEMIGOS[tipo_mob]
+    hp_max = datos["hp_max"]
+    arte   = _ARTE.get(tipo_mob, ASCII_DEFAULT)
     barra  = _barra(hp_actual, hp_max)
-
+    stats  = f"FUE:{datos['fuerza']}  DEF:{datos['defensa']}  AGI:{datos['agilidad']}%"
     contenido = (
         f"[bold green]{arte}[/]\n"
-        f"[bold white]{nombre}[/]\n"
+        f"[bold white]{datos['nombre']}[/]\n"
         f"[red]HP  {barra}  {hp_actual}/{hp_max}[/]\n"
-        f"[dim]FUE:{stats_mob['fuerza']}  DEF:{stats_mob['defensa']}  AGI:{stats_mob['agilidad']}%[/]"
+        f"[dim]{stats}[/]"
     )
-    return Panel(
-        contenido,
-        title=f"[bold green]ENEMIGO — {nombre}[/]",
-        border_style="green",
-        expand=True,
-        padding=(1, 4),
-    )
+    return Panel(contenido, title=f"[bold green]ENEMIGO — {datos['nombre']}[/]",
+                 border_style="green", expand=True, padding=(1, 4))
 
 
-def _panel_stats_jugador(inventario, escudo_roto=False):
-    """Panel con stats completos + bonificaciones de items equipados."""
-    p      = estado["personaje"]
-    hp     = estado["hp"]
-    hp_max = estado["hp_max"]
-    mp     = estado["mp"]
-    mp_max = estado["mp_max"]
+def _panel_personaje(personaje, inventario, escudo_roto=False):
+    hp     = personaje["stats_actuales"]["hp"]
+    hp_max = personaje["stats_base"]["hp"]
+    mp     = personaje["stats_actuales"]["mp"]
+    mp_max = personaje["stats_base"]["mp"]
+    totales, bonus = _stats_con_items(personaje, inventario, escudo_roto)
 
-    nombre = p["nombre"] if p else "Héroe"
-    clase  = p["clase"]  if p else ""
-
-    base, bonus, _ = _calcular_stats_con_items(p, inventario) if p else ({}, {}, [])
-
-    barra_hp = _barra(hp, hp_max)
-    barra_mp = _barra(mp, mp_max)
-
-    def stat_linea(nombre_stat, key):
-        b  = base.get(key, 0)
+    def sl(etiqueta, key):
+        b  = totales.get(key, 0)
         bx = bonus.get(key, 0)
-        if escudo_roto and key == "defensa":
-            bx = 0
-        if bx > 0:
-            bonus_str = f" [bold green](+{bx})[/]"
-        elif bx < 0:
-            bonus_str = f" [bold red]({bx})[/]"
-        else:
-            bonus_str = ""
-        return f"[dim]{nombre_stat:<10}[/] [white]{b + bx}[/]{bonus_str}"
+        if bx > 0:   sfx = f" [bold green](+{bx})[/]"
+        elif bx < 0: sfx = f" [bold red]({bx})[/]"
+        else:        sfx = ""
+        return f"[dim]{etiqueta:<10}[/] [white]{b}[/]{sfx}"
 
+    vidas = "♥ " * personaje["vidas"] + "♡ " * (3 - personaje["vidas"])
     lineas = [
-        f"[bold white]{nombre}[/]  [dim]{clase}[/]\n",
-        f"[red]HP  {barra_hp}  {hp}/{hp_max}[/]",
-        f"[blue]MP  {barra_mp}  {mp}/{mp_max}[/]\n",
-        stat_linea("Fuerza",   "fuerza"),
-        stat_linea("Defensa",  "defensa"),
-        stat_linea("Agilidad", "agilidad"),
-        stat_linea("Suerte",   "suerte"),
-        stat_linea("Magia",    "magia"),
-        stat_linea("Espiritu", "espiritu"),
+        f"[bold white]{personaje['nombre']}[/]  [dim]{personaje['clase']}[/]  {vidas}",
+        "",
+        f"[red]HP  {_barra(hp,hp_max,10)}  {hp}/{hp_max}[/]",
+        f"[blue]MP  {_barra(mp,mp_max,10)}  {mp}/{mp_max}[/]",
+        "",
+        sl("Fuerza",   "fuerza")  + "   " + sl("Defensa",  "defensa"),
+        sl("Agilidad", "agilidad") + "   " + sl("Suerte",   "suerte"),
+        sl("Magia",    "magia")   + "   " + sl("Espíritu", "espiritu"),
     ]
-
     if escudo_roto:
         lineas.append("\n[bold red]⚠ Escudo roto![/]")
 
-    return Panel(
-        "\n".join(lineas),
-        title="[bold green]PERSONAJE[/]",
-        border_style="green",
-        expand=True,
-        padding=(1, 2),
-    )
+    return Panel("\n".join(lineas), title="[bold green]PERSONAJE[/]",
+                 border_style="green", expand=True, padding=(1, 2))
 
 
-def _panel_opciones(cursor):
-    opciones = [
-        ("1", "Luchar"),
-        ("2", "Habilidades"),
-        ("3", "Ítems"),
-        ("4", "Escapar"),
-    ]
+def _panel_acciones(cursor):
+    ops = [("1","Luchar"), ("2","Habilidades"), ("3","Ítems"), ("4","Escapar")]
     lineas = []
-    for i, (tecla, texto) in enumerate(opciones):
-        if i == cursor:
-            lineas.append(f"[bold green]▶ [{tecla}] {texto}[/]")
-        else:
-            lineas.append(f"[dim]  [{tecla}] {texto}[/]")
-
-    return Panel(
-        "\n".join(lineas),
-        title="[bold green]ACCIONES[/]",
-        border_style="green",
-        expand=True,
-        padding=(1, 2),
-    )
+    for i, (t, txt) in enumerate(ops):
+        lineas.append(f"[bold green]▶ [{t}] {txt}[/]" if i == cursor
+                      else f"[dim]  [{t}] {txt}[/]")
+    return Panel("\n".join(lineas), title="[bold green]ACCIONES[/]",
+                 border_style="green", expand=True, padding=(1, 2))
 
 
-def _panel_habilidades(personaje, cursor_hab):
-    if not personaje:
-        return Panel("[dim]Sin habilidades[/]", title="HABILIDADES", border_style="green")
-
+def _panel_habilidades(personaje, cursor_sec):
     lineas = []
-    for i, hab in enumerate(personaje.get("habilidades", [])):
-        mp_ok = estado["mp"] >= hab["costo_mp"]
+    for i, h in enumerate(personaje.get("habilidades", [])):
+        mp_ok = personaje["stats_actuales"]["mp"] >= h["costo_mp"]
         color = "white" if mp_ok else "red"
-        marca = "▶ " if i == cursor_hab else "  "
-        tipo_txt = _tipo_habilidad_texto(hab["tipo"])
+        marca = "▶ " if i == cursor_sec else "  "
         lineas.append(
-            f"[{color}]{marca}[bold]{hab['nombre']}[/bold]\n"
-            f"      {tipo_txt}  | MP:{hab['costo_mp']}  | {hab['probabilidad']}% éxito[/]"
+            f"[{color}]{marca}[bold]{h['nombre']}[/bold]\n"
+            f"      {_tipo_texto(h['tipo'])}  | MP:{h['costo_mp']}  | {h['probabilidad']}% éxito[/]"
         )
-
-    return Panel(
-        "\n".join(lineas),
-        title="[bold green]HABILIDADES[/]",
-        border_style="cyan",
-        expand=True,
-        padding=(1, 2),
-    )
+    return Panel("\n".join(lineas), title="[bold green]HABILIDADES[/]",
+                 border_style="cyan", expand=True, padding=(1, 2))
 
 
-def _panel_items_batalla(inventario, cursor_item):
+def _panel_items(inventario, cursor_sec):
     consumibles = [it for it in inventario if it["tipo"] == "consumible"]
     if not consumibles:
-        return Panel("[dim]Sin consumibles[/]", title="ÍTEMS", border_style="green")
-
+        return Panel("[dim]Sin consumibles[/]", title="ÍTEMS",
+                     border_style="yellow", expand=True, padding=(1, 2))
     lineas = []
     for i, it in enumerate(consumibles):
-        marca = "▶ " if i == cursor_item else "  "
+        marca = "▶ " if i == cursor_sec else "  "
         info  = CATALOGO_ITEMS.get(it["id_item"], {})
-        efecto_str = ", ".join(f"{k}+{v}" if v > 0 else f"{k}{v}"
-                               for k, v in info.get("efecto", {}).items())
+        efecto_str = ", ".join(
+            f"{k}{'+'if v>0 else ''}{v}" for k, v in info.get("efecto", {}).items()
+        )
         lineas.append(f"[white]{marca}{it['nombre']} x{it['cantidad']}[/] [dim]{efecto_str}[/]")
+    return Panel("\n".join(lineas), title="[bold green]ÍTEMS[/]",
+                 border_style="yellow", expand=True, padding=(1, 2))
 
-    return Panel(
-        "\n".join(lineas),
-        title="[bold green]ÍTEMS[/]",
-        border_style="yellow",
-        expand=True,
-        padding=(1, 2),
-    )
 
-# ─── Renderizado principal ────────────────────────────────────────────────────
+def _panel_log(mensaje):
+    return Panel(f"[bold yellow]{mensaje}[/]" if mensaje else "[dim]...[/]",
+                 border_style="green", expand=True, padding=(0, 2))
 
-def renderizar_batalla(simbolo_enemigo, stats_mob, hp_enemigo,
-                       cursor=0, mensaje="", inventario=None,
-                       modo="menu", cursor_sec=0, escudo_roto=False):
-    if inventario is None:
-        inventario = []
+# ─── Render principal ────────────────────────────────────────────────────────
 
+def _renderizar(tipo_mob, hp_enemigo, contexto, cursor, mensaje,
+                modo, cursor_sec, escudo_roto):
     os.system('cls' if os.name == 'nt' else 'clear')
-
-    panel_enemigo  = _panel_enemigo(simbolo_enemigo, stats_mob, hp_enemigo)
-    panel_stats    = _panel_stats_jugador(inventario, escudo_roto)
-
+    personaje  = contexto["personaje"]
+    inventario = contexto["inventario"]
+    console.print(Align(_panel_enemigo(tipo_mob, hp_enemigo), align="center"))
     if modo == "habilidades":
-        panel_der = _panel_habilidades(estado.get("personaje"), cursor_sec)
+        panel_der = _panel_habilidades(personaje, cursor_sec)
     elif modo == "items":
-        panel_der = _panel_items_batalla(inventario, cursor_sec)
+        panel_der = _panel_items(inventario, cursor_sec)
     else:
-        panel_der = _panel_opciones(cursor)
+        panel_der = _panel_acciones(cursor)
+    console.print(Columns([
+        _panel_personaje(personaje, inventario, escudo_roto),
+        panel_der,
+    ], expand=True))
+    console.print(Align(_panel_log(mensaje), align="center"))
 
-    console.print(Align(panel_enemigo, align="center"))
-    console.print(Columns([panel_stats, panel_der], expand=True))
+# ─── Turno del mob ────────────────────────────────────────────────────────────
 
-    if mensaje:
-        console.print(Align(f"[bold yellow]>> {mensaje}[/]", align="center"))
+def _turno_mob(tipo_mob, inventario, escudo_roto, personaje):
+    """
+    Ejecuta el ataque del mob. Devuelve (mensaje, nuevo_escudo_roto).
+    Lee hp del personaje desde stats_actuales y lo actualiza ahí.
+    """
+    datos   = STATS_ENEMIGOS[tipo_mob]
+    totales, bonus = _stats_con_items(personaje, inventario, escudo_roto)
+    defensa = totales.get("defensa", 0)
+    agi_p   = totales.get("agilidad", 0)
+    msgs    = []
 
-# ─── Lógica de combate ────────────────────────────────────────────────────────
-
-def _daño_jugador(inventario, escudo_roto):
-    """Calcula el daño base del jugador con items equipados."""
-    p = estado.get("personaje")
-    if not p:
-        return 10
-    base, bonus, _ = _calcular_stats_con_items(p, inventario)
-    fuerza = base.get("fuerza", 10) + bonus.get("fuerza", 0)
-    return max(1, fuerza)
-
-
-def _daño_enemigo(stats_mob, inventario, escudo_roto):
-    """Calcula el daño que hace el mob reducido por defensa del jugador."""
-    p = estado.get("personaje")
-    base, bonus, _ = _calcular_stats_con_items(p, inventario) if p else ({}, {}, [])
-    defensa = base.get("defensa", 0) + (0 if escudo_roto else bonus.get("defensa", 0))
-    dano_bruto = stats_mob.get("fuerza", 10)
-    return max(1, dano_bruto - defensa)
-
-
-def _agilidad_jugador(inventario):
-    p = estado.get("personaje")
-    if not p:
-        return 0
-    base, bonus, _ = _calcular_stats_con_items(p, inventario)
-    return base.get("agilidad", 0) + bonus.get("agilidad", 0)
-
-
-def _turno_mob(stats_mob, inventario, escudo_roto, obtener_tecla_fn,
-               simbolo, hp_enemigo, hp_max):
-    """Ejecuta el turno del mob (puede usar habilidad especial) y devuelve mensaje."""
-    mensajes = []
-
-    # ¿El mob esquiva primero? No aplica — el mob ataca
-    # Intentar habilidad especial (probabilidad independiente)
-    habilidades = stats_mob.get("habilidades", [])
+    # ¿habilidad especial?
     hab_usada = None
-    for hab in habilidades:
+    for hab in datos["habilidades"]:
         if random.randint(1, 100) <= hab["probabilidad"]:
             hab_usada = hab
             break
 
     golpes = 1
     if hab_usada:
-        tipo_txt = _tipo_habilidad_texto(hab_usada["tipo"])
-        mensajes.append(f"[bold magenta]{stats_mob['nombre']} usa {hab_usada['nombre']} ({tipo_txt})![/]")
+        msgs.append(f"[magenta]{datos['nombre']} usa {hab_usada['nombre']} ({_tipo_texto(hab_usada['tipo'])})![/]")
 
         if hab_usada["nombre"] == "Disparo Ácido":
-            dano = _daño_enemigo(stats_mob, inventario, escudo_roto) * 2
-            # ¿Jugador esquiva?
-            if _intentar_esquivar(_agilidad_jugador(inventario)):
-                mensajes.append("[bold cyan]¡Esquivaste el Disparo Ácido![/]")
-                dano = 0
+            dano = max(1, int(datos["fuerza"] * 2) - defensa)
+            if _esquivar(agi_p):
+                msgs.append("[cyan]¡Esquivaste el Disparo Ácido![/]")
             else:
-                estado["hp"] = max(0, estado["hp"] - int(dano))
-                mensajes.append(f"[red]Recibiste {int(dano)} de daño ácido![/]")
+                personaje["stats_actuales"]["hp"] = max(0, personaje["stats_actuales"]["hp"] - dano)
+                msgs.append(f"[red]Recibiste {dano} de daño ácido![/]")
+            return " | ".join(msgs), escudo_roto
 
         elif hab_usada["nombre"] == "Cuerpo Ácido":
-            items_eq = [it for it in inventario if it.get("equipado") and it["tipo"] == "equipable"]
-            if items_eq:
-                destruida = random.choice(items_eq)
+            eq = [it for it in inventario if it.get("equipado") and it["tipo"] == "equipable"]
+            if eq:
+                destruida = random.choice(eq)
                 destruida["equipado"] = False
-                mensajes.append(f"[bold red]¡{destruida['nombre']} fue destruida por el ácido![/]")
+                msgs.append(f"[bold red]¡{destruida['nombre']} fue destruida por el ácido![/]")
             else:
-                mensajes.append("[dim]El Cuerpo Ácido no encontró arma equipada.[/]")
+                msgs.append("[dim]Sin arma equipada, el ácido no hace nada.[/]")
+            return " | ".join(msgs), escudo_roto
 
         elif hab_usada["nombre"] == "Daga Rompe Escudos":
-            return mensajes, True   # escudo_roto = True
+            msgs.append("[bold red]¡Tu escudo fue anulado![/]")
+            return " | ".join(msgs), True   # escudo_roto = True
 
         elif hab_usada["nombre"] == "Modo Berserker":
             tirada = random.randint(1, 100)
             golpes = 3 if tirada <= 20 else 2
-            mensajes.append(f"[bold red]¡Modo Berserker! El Goblin ataca {golpes} veces![/]")
+            msgs.append(f"[bold red]¡Modo Berserker! Ataca {golpes} veces![/]")
 
-    # Ataque(s) normal(es)
-    for g in range(golpes):
-        if hab_usada and hab_usada["nombre"] == "Disparo Ácido":
-            break   # ya se procesó
-        dano = _daño_enemigo(stats_mob, inventario, escudo_roto)
-        if _intentar_esquivar(_agilidad_jugador(inventario)):
-            mensajes.append(f"[bold cyan]¡Esquivaste el ataque{'s'[g==0:]}![/]")
+        elif hab_usada["nombre"] == "Golpe Devastador":
+            dano = max(1, int(datos["fuerza"] * 2) - defensa)
+            if _esquivar(agi_p):
+                msgs.append("[cyan]¡Esquivaste el Golpe Devastador![/]")
+            else:
+                personaje["stats_actuales"]["hp"] = max(0, personaje["stats_actuales"]["hp"] - dano)
+                msgs.append(f"[red]¡Golpe Devastador! Recibiste {dano} de daño![/]")
+            return " | ".join(msgs), escudo_roto
+
+        elif hab_usada["nombre"] == "Torbellino":
+            golpes = 3
+            msgs.append("[bold red]¡Torbellino! El Campeón ataca 3 veces![/]")
+
+        elif hab_usada["nombre"] == "Grito de Arena":
+            msgs.append("[bold red]¡Grito de Arena! Tu escudo fue destrozado![/]")
+            return " | ".join(msgs), True
+
+    for _ in range(golpes):
+        dano = max(1, datos["fuerza"] - defensa)
+        if _esquivar(agi_p):
+            msgs.append("[cyan]¡Esquivaste el ataque![/]")
         else:
-            estado["hp"] = max(0, estado["hp"] - dano)
-            mensajes.append(f"[red]Recibiste {dano} de daño.[/]")
+            personaje["stats_actuales"]["hp"] = max(0, personaje["stats_actuales"]["hp"] - dano)
+            msgs.append(f"[red]Recibiste {dano} de daño.[/]")
 
-    return mensajes, escudo_roto
+    return " | ".join(msgs), escudo_roto
 
+# ─── Loop principal ──────────────────────────────────────────────────────────
 
-# ─── Loop principal de batalla ────────────────────────────────────────────────
-
-def iniciar_batalla(simbolo_enemigo, nombre_enemigo, hp_max_enemigo, obtener_tecla_fn,
-                    inventario=None):
+def iniciar_batalla(enemigo_dict, mapa, contexto, obtener_tecla_fn):
     """
-    Gestiona el loop de batalla completo.
-    Retorna True si el jugador ganó, False si escapó o murió.
-    """
-    if inventario is None:
-        inventario = estado.get("inventario", [])
+    Parámetros:
+        enemigo_dict  : entrada de contexto["mundo"]["enemigos"]
+        mapa          : mapa actual (para eliminar el sprite al morir)
+        contexto      : contexto completo del juego
+        obtener_tecla_fn : función de lectura de teclado
 
-    stats_mob  = STATS_ENEMIGOS.get(simbolo_enemigo, {
-        "nombre": nombre_enemigo, "hp_max": hp_max_enemigo,
-        "fuerza": 15, "defensa": 5, "agilidad": 10, "habilidades": []
-    })
-    stats_mob["nombre"] = nombre_enemigo
-    hp_enemigo   = hp_max_enemigo
-    cursor       = 0
-    mensaje      = ""
-    escudo_roto  = False
-    modo         = "menu"
-    cursor_sec   = 0   # cursor de habilidades o items
+    Devuelve True si el jugador ganó, False si escapó o murió.
+    """
+    personaje   = contexto["personaje"]
+    inventario  = contexto["inventario"]
+    tipo_mob    = enemigo_dict["tipo"]
+    datos       = STATS_ENEMIGOS[tipo_mob]
+    hp_enemigo  = enemigo_dict["hp_actual"]   # FIX: usa hp_actual del dict, que es hp_max al inicio
+    hp_max_en   = datos["hp_max"]
+    cursor      = 0
+    mensaje     = f"¡Un {datos['nombre']} aparece!"
+    escudo_roto = False
+    modo        = "menu"
+    cursor_sec  = 0
 
     while True:
-        renderizar_batalla(simbolo_enemigo, stats_mob, hp_enemigo,
-                           cursor, mensaje, inventario, modo, cursor_sec, escudo_roto)
+        _renderizar(tipo_mob, hp_enemigo, contexto, cursor,
+                    mensaje, modo, cursor_sec, escudo_roto)
         mensaje = ""
+        t = obtener_tecla_fn()
 
-        tecla = obtener_tecla_fn()
-
-        # ── Menú secundario: habilidades ──────────────────────────────────────
+        # ── Menú habilidades ──────────────────────────────────────────────────
         if modo == "habilidades":
-            habilidades = (estado.get("personaje") or {}).get("habilidades", [])
-            if tecla == 'w':
-                cursor_sec = (cursor_sec - 1) % max(1, len(habilidades))
-            elif tecla == 's':
-                cursor_sec = (cursor_sec + 1) % max(1, len(habilidades))
-            elif tecla in ('\r', ' ', 'e'):
-                if habilidades:
-                    hab = habilidades[cursor_sec]
-                    if estado["mp"] < hab["costo_mp"]:
+            habs = personaje.get("habilidades", [])
+            if t == 'w':
+                cursor_sec = (cursor_sec - 1) % max(1, len(habs))
+            elif t == 's':
+                cursor_sec = (cursor_sec + 1) % max(1, len(habs))
+            elif t in ('\r', '\n', 'e', ' '):
+                if habs:
+                    hab = habs[cursor_sec]
+                    if personaje["stats_actuales"]["mp"] < hab["costo_mp"]:
                         mensaje = f"[red]Sin MP para {hab['nombre']}.[/]"
                     else:
-                        tipo_txt = _tipo_habilidad_texto(hab["tipo"])
-                        estado["mp"] -= hab["costo_mp"]
-                        tirada  = random.randint(1, 100)
-                        exito   = tirada <= hab["probabilidad"]
+                        personaje["stats_actuales"]["mp"] -= hab["costo_mp"]
+                        totales, _ = _stats_con_items(personaje, inventario, escudo_roto)
+                        exito = random.randint(1, 100) <= hab["probabilidad"]
                         if exito:
-                            dano_hab = _daño_jugador(inventario, escudo_roto) + hab.get("valor", 0)
-                            # ¿Mob esquiva?
-                            if _intentar_esquivar(stats_mob.get("agilidad", 0)):
-                                mensaje = f"[cyan]{stats_mob['nombre']} esquivó {hab['nombre']}![/]"
+                            dano = max(1, totales.get("fuerza", 10) + hab.get("valor", 0))
+                            if _esquivar(datos["agilidad"]):
+                                mensaje = f"[cyan]{datos['nombre']} esquivó {hab['nombre']}![/]"
                             else:
-                                hp_enemigo -= int(dano_hab)
-                                mensaje = (f"[bold]{hab['nombre']}[/] ({tipo_txt}) "
-                                           f"¡Éxito! {int(dano_hab)} daño.")
+                                hp_enemigo -= int(dano)
+                                mensaje = f"[bold]{hab['nombre']}[/] ({_tipo_texto(hab['tipo'])}) → {int(dano)} daño."
                         else:
-                            mensaje = f"{hab['nombre']} falló (tirada {tirada} > {hab['probabilidad']}%)."
-
-                        # Turno del mob
-                        msgs_mob, escudo_roto = _turno_mob(
-                            stats_mob, inventario, escudo_roto,
-                            obtener_tecla_fn, simbolo_enemigo, hp_enemigo, hp_max_enemigo)
-                        mensaje += " | " + " ".join(msgs_mob)
+                            mensaje = f"{hab['nombre']} falló."
+                        msg_mob, escudo_roto = _turno_mob(tipo_mob, inventario, escudo_roto, personaje)
+                        mensaje += " | " + msg_mob
                         modo = "menu"
-            elif tecla in ('q', '\x1b'):
+            elif t in ('q', '\x1b'):
                 modo = "menu"
 
-        # ── Menú secundario: items ────────────────────────────────────────────
+        # ── Menú ítems ────────────────────────────────────────────────────────
         elif modo == "items":
             consumibles = [it for it in inventario if it["tipo"] == "consumible"]
-            if tecla == 'w':
+            if t == 'w':
                 cursor_sec = (cursor_sec - 1) % max(1, len(consumibles))
-            elif tecla == 's':
+            elif t == 's':
                 cursor_sec = (cursor_sec + 1) % max(1, len(consumibles))
-            elif tecla in ('\r', ' ', 'e'):
+            elif t in ('\r', '\n', 'e', ' '):
                 if consumibles:
                     it   = consumibles[cursor_sec]
                     info = CATALOGO_ITEMS.get(it["id_item"], {})
-                    efectos = info.get("efecto", {})
-                    partes  = []
-                    for stat, val in efectos.items():
+                    partes = []
+                    for stat, val in info.get("efecto", {}).items():
                         if stat == "hp":
-                            estado["hp"] = min(estado["hp_max"], estado["hp"] + val)
+                            personaje["stats_actuales"]["hp"] = min(
+                                personaje["stats_base"]["hp"],
+                                personaje["stats_actuales"]["hp"] + val
+                            )
                             partes.append(f"HP {'+'if val>0 else ''}{val}")
                         elif stat == "mp":
-                            estado["mp"] = min(estado["mp_max"], estado["mp"] + val)
+                            personaje["stats_actuales"]["mp"] = min(
+                                personaje["stats_base"]["mp"],
+                                personaje["stats_actuales"]["mp"] + val
+                            )
                             partes.append(f"MP {'+'if val>0 else ''}{val}")
-                    # consumir
                     it["cantidad"] -= 1
                     if it["cantidad"] <= 0:
                         inventario.remove(it)
                         cursor_sec = max(0, cursor_sec - 1)
-                    mensaje = f"Usaste {it['nombre']}: {', '.join(partes) or 'sin efecto'}"
+                    mensaje = f"Usaste {it['nombre']}: {', '.join(partes) or 'sin efecto'}."
                     modo = "menu"
-            elif tecla in ('q', '\x1b'):
+            elif t in ('q', '\x1b'):
                 modo = "menu"
 
         # ── Menú principal ────────────────────────────────────────────────────
         else:
-            if tecla == 'w':
+            if t == 'w':
                 cursor = (cursor - 1) % 4
-            elif tecla == 's':
+            elif t == 's':
                 cursor = (cursor + 1) % 4
 
-            elif tecla in ('\r', '1', '2', '3', '4'):
-                accion = cursor if tecla == '\r' else int(tecla) - 1
+            elif t in ('\r', '\n', '1', '2', '3', '4'):
+                accion = cursor if t in ('\r', '\n') else int(t) - 1
 
-                # ── Acción 0: Luchar ──────────────────────────────────────────
-                if accion == 0:
-                    tipo_txt = _tipo_habilidad_texto("Ataque")
-                    dano_j = _daño_jugador(inventario, escudo_roto)
-
-                    # ¿Mob esquiva?
-                    if _intentar_esquivar(stats_mob.get("agilidad", 0)):
-                        mensaje = f"[cyan]{stats_mob['nombre']} esquivó tu ataque ({tipo_txt})![/]"
+                if accion == 0:   # LUCHAR
+                    totales, _ = _stats_con_items(personaje, inventario, escudo_roto)
+                    dano_j = max(1, totales.get("fuerza", 10))
+                    tipo_hab = "⚔  Ataque físico"
+                    if _esquivar(datos["agilidad"]):
+                        mensaje = f"[cyan]{datos['nombre']} esquivó tu ataque ({tipo_hab})![/]"
                     else:
                         hp_enemigo -= dano_j
-                        mensaje = f"{tipo_txt}: hiciste {dano_j} daño."
+                        mensaje = f"{tipo_hab}: hiciste {dano_j} daño."
+                    msg_mob, escudo_roto = _turno_mob(tipo_mob, inventario, escudo_roto, personaje)
+                    mensaje += " | " + msg_mob
 
-                    # Turno del mob
-                    msgs_mob, escudo_roto = _turno_mob(
-                        stats_mob, inventario, escudo_roto,
-                        obtener_tecla_fn, simbolo_enemigo, hp_enemigo, hp_max_enemigo)
-                    mensaje += " | " + " ".join(msgs_mob)
-
-                # ── Acción 1: Habilidades ─────────────────────────────────────
-                elif accion == 1:
-                    modo       = "habilidades"
+                elif accion == 1:   # HABILIDADES
+                    modo = "habilidades"
                     cursor_sec = 0
 
-                # ── Acción 2: Ítems ───────────────────────────────────────────
-                elif accion == 2:
-                    modo       = "items"
+                elif accion == 2:   # ÍTEMS
+                    modo = "items"
                     cursor_sec = 0
 
-                # ── Acción 3: Escapar ─────────────────────────────────────────
-                elif accion == 3:
-                    p = estado.get("personaje")
-                    base, bonus, _ = _calcular_stats_con_items(p, inventario) if p else ({}, {}, [])
-                    agi = base.get("agilidad", 20) + bonus.get("agilidad", 0)
-                    prob_escape = min(90, agi + 10)
-                    if random.randint(1, 100) <= prob_escape:
-                        mensaje = "¡Escapaste!"
-                        renderizar_batalla(simbolo_enemigo, stats_mob, hp_enemigo,
-                                           cursor, mensaje, inventario, "menu", 0, escudo_roto)
+                elif accion == 3:   # ESCAPAR
+                    totales, _ = _stats_con_items(personaje, inventario, escudo_roto)
+                    prob = min(90, totales.get("agilidad", 20) + 10)
+                    if random.randint(1, 100) <= prob:
+                        _renderizar(tipo_mob, hp_enemigo, contexto, cursor,
+                                    "¡Escapaste!", "menu", 0, escudo_roto)
                         obtener_tecla_fn()
                         return False
                     else:
                         mensaje = "No pudiste escapar..."
-                        msgs_mob, escudo_roto = _turno_mob(
-                            stats_mob, inventario, escudo_roto,
-                            obtener_tecla_fn, simbolo_enemigo, hp_enemigo, hp_max_enemigo)
-                        mensaje += " | " + " ".join(msgs_mob)
+                        msg_mob, escudo_roto = _turno_mob(tipo_mob, inventario, escudo_roto, personaje)
+                        mensaje += " | " + msg_mob
 
         # ── Verificar victoria / derrota ──────────────────────────────────────
+        hp_enemigo = max(0, hp_enemigo)
+
         if hp_enemigo <= 0:
-            renderizar_batalla(simbolo_enemigo, stats_mob, 0,
-                               cursor, f"[bold green]¡Derrotaste al {nombre_enemigo}![/]",
-                               inventario, "menu", 0, escudo_roto)
+            _renderizar(tipo_mob, 0, contexto, cursor,
+                        f"[bold green]¡Derrotaste al {datos['nombre']}! Presioná una tecla.[/]",
+                        "menu", 0, escudo_roto)
             obtener_tecla_fn()
+            # FIX: eliminar del mapa Y de la lista
+            eliminar_enemigo(enemigo_dict, mapa, contexto)
             return True
 
-        if estado["hp"] <= 0:
-            renderizar_batalla(simbolo_enemigo, stats_mob, max(0, hp_enemigo),
-                               cursor, "[bold red]¡Fuiste derrotado![/]",
-                               inventario, "menu", 0, escudo_roto)
+        if personaje["stats_actuales"]["hp"] <= 0:
+            from personajes import revivir
+            _renderizar(tipo_mob, hp_enemigo, contexto, cursor,
+                        "[bold red]¡Fuiste derrotado! Presioná una tecla.[/]",
+                        "menu", 0, escudo_roto)
             obtener_tecla_fn()
+            revivir(personaje)
             return False
