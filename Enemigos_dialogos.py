@@ -3,29 +3,29 @@ ENCUENTRO = 0  # cuando aparece el enemigo
 ATAQUE = 1     # cuando el enemigo ataca
 DERROTA = 2    # cuando el enemigo es vencido
 
-# DICCIONARIO con los dialogos de cada enemigo
+# diccionario con los dialogos de cada enemigo
 # La clave es el tipo de enemigo y el valor es una tupla con 3 frases:
 # (frase de encuentro, frase de ataque, frase de derrota)
 ENEMIGOS_DIALOGOS = {
     "slime": (
-        "Un slime tembloroso te bloquea el camino.",
-        "El slime salta y te embiste!",
-        "El slime se deshace en un charco.",
+        "Glup...? Glup glup!",
+        "Gloosh! Gloosh!",
+        "Gluuu... plop...",
     ),
     "guerrero": (
-        "Un guerrero rival levanta su escudo frente a vos.",
-        "El guerrero descarga un golpe brutal!",
-        "El guerrero cae de rodillas, vencido.",
+        "Solo uno puede ser rey, y no vas a ser vos.",
+        "Senti el peso de mi espada!",
+        "Imposible... mi escudo no alcanzo...",
     ),
     "pirata": (
-        "Un pirata te apunta con su mosquete.",
-        "El pirata dispara sin piedad!",
-        "El pirata suelta su espada y se rinde.",
+        "Je! Otro tonto que quiere quitarme el tesoro?",
+        "Toma esto, rata de tierra firme!",
+        "Maldicion... me hundo como un barco viejo...",
     ),
     "bufon": (
-        "Un bufon rie mientras te rodea.",
-        "El bufon te arroja un cuchillo!",
-        "El bufon hace una ultima reverencia y cae.",
+        "Jaja! Viniste a jugar conmigo?",
+        "A ver si adivinas de donde viene el golpe!",
+        "Mi mejor truco... y aun asi perdi...",
     ),
 }
 
