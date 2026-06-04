@@ -22,24 +22,11 @@ def _dibujar_valla_y_entrada_jugador(mapa):
     """Valla '+' perimetral y entrada 'O' para el jugador."""
     for f in range(2, MAPA_REAL_ALTO - 2):
         for c in range(2, MAPA_REAL_ANCHO - 2):
-<<<<<<< HEAD
             if f == 2 or f == MAPA_REAL_ALTO - 3 or c == 2 or c == MAPA_REAL_ANCHO - 3:
                 mapa[f][c] = SIMBOLO_VALLA
 
     mapa[86][73] = simbolos_entorno[1]   # O — entrada desde el Prado
     mapa[2][65]  = simbolos_entorno[1]   # O — salida al Coliseo (arriba)
-=======
-            if (
-                f == 2
-                or f == MAPA_REAL_ALTO - 3
-                or c == 2
-                or c == MAPA_REAL_ANCHO - 3
-            ):
-                mapa[f][c] = "🚧"
-
-    # Punto de llegada desde el Prado (entrada sur)
-    mapa[86][73] = simbolos_entorno[1]  # O
->>>>>>> origin/integracion_40
 
 
 def _dibujar_senderos(mapa):

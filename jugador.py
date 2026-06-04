@@ -2,7 +2,6 @@
 
 import random
 from config import (
-<<<<<<< HEAD
     MAPA_REAL_ALTO, MAPA_REAL_ANCHO,
     simbolos_entorno, simbolos_pasto, simbolos_especiales,
     TECLAS_MOVIMIENTO, items_mapa,
@@ -32,42 +31,6 @@ def mover(tecla, contexto, obtener_tecla_fn=None):
     elif tecla == TECLAS_MOVIMIENTO[1]: dc = -1
     elif tecla == TECLAS_MOVIMIENTO[3]: dc =  1
     else: return
-=======
-    MAPA_REAL_ALTO,
-    MAPA_REAL_ANCHO,
-    simbolos_entorno,
-    simbolos_pasto,
-    simbolos_especiales,
-    TECLAS_MOVIMIENTO,
-    items_mapa,
-)
-from mapa_prado import generar_mapa_prado, generar_enemigos_prado
-from mapa_mercado import generar_mapa_mercado_total
-from mapa_cementerio import generar_mapa_cementerio
-from inventario import agregar_item
-from entidades import inicializar_slimes
-
-
-# ─── Movimiento ───────────────────────────────────────────────────────────────
-
-
-def mover(tecla, contexto):
-    """Mueve al jugador según la tecla pulsada, con colisiones e ítems."""
-    pos_p = contexto["mundo"]["pos_p"]
-    mapa_actual = contexto["mundo"]["mapa_actual"]
-
-    df, dc = 0, 0
-    if tecla == TECLAS_MOVIMIENTO[2]:
-        df = 1  # s
-    elif tecla == TECLAS_MOVIMIENTO[0]:
-        df = -1  # w
-    elif tecla == TECLAS_MOVIMIENTO[1]:
-        dc = -1  # a
-    elif tecla == TECLAS_MOVIMIENTO[3]:
-        dc = 1  # d
-    else:
-        return
->>>>>>> origin/integracion_40
 
     nueva_f = pos_p[0] + df
     nueva_c = pos_p[1] + dc
@@ -102,7 +65,6 @@ def mover(tecla, contexto):
             item_base = random.choice(items_mapa[clave])
             agregar_item(item_base, contexto["inventario"])
 
-<<<<<<< HEAD
     # ── Mover ─────────────────────────────────────────────────────────────────
     mapa_actual[pos_p[0]][pos_p[1]] = mundo["simbolo_debajo"]
 
@@ -112,27 +74,11 @@ def mover(tecla, contexto):
         mundo["simbolo_debajo"] = " "
     else:
         mundo["simbolo_debajo"] = celda_destino
-=======
-    # 1. Restaurar celda anterior
-    mapa_actual[pos_p[0]][pos_p[1]] = contexto["mundo"]["simbolo_debajo"]
-
-    # 2. Guardar símbolo de la celda destino
-    if (
-        celda_destino in simbolos_pasto
-        or celda_destino == simbolos_especiales[1]
-    ):
-        contexto["mundo"]["simbolo_debajo"] = random.choice(simbolos_pasto)
-    elif celda_destino == " ":
-        contexto["mundo"]["simbolo_debajo"] = " "
-    else:
-        contexto["mundo"]["simbolo_debajo"] = celda_destino
->>>>>>> origin/integracion_40
 
     pos_p[0], pos_p[1] = nueva_f, nueva_c
     mapa_actual[pos_p[0]][pos_p[1]] = simbolos_especiales[0]  # P
 
 
-<<<<<<< HEAD
 def cambio_de_mapa(contexto):
     mundo = contexto["mundo"]
     if mundo["simbolo_debajo"] != "O":
@@ -141,26 +87,10 @@ def cambio_de_mapa(contexto):
     numero_mapa = mundo["numero_mapa"]
     pos_p       = mundo["pos_p"]
     mapa_actual = mundo["mapa_actual"]
-=======
-# ─── Cambio de mapa ───────────────────────────────────────────────────────────
-
-
-def cambio_de_mapa(contexto):
-    """
-    Si el jugador está parado sobre una entrada 'O', ofrece cambiar de mapa.
-    """
-    if contexto["mundo"]["simbolo_debajo"] != "O":
-        return
-
-    numero_mapa = contexto["mundo"]["numero_mapa"]
-    pos_p = contexto["mundo"]["pos_p"]
-    mapa_actual = contexto["mundo"]["mapa_actual"]
->>>>>>> origin/integracion_40
 
     def _confirmar(msg):
         return input(msg).lower() == "s"
 
-<<<<<<< HEAD
     def _cargar(nuevo_mapa, nuevo_numero, nueva_pos, nuevo_debajo,
                 alto=MAPA_REAL_ALTO, ancho=MAPA_REAL_ANCHO, enemigos=None):
         mapa_actual[pos_p[0]][pos_p[1]] = "O"
@@ -173,29 +103,11 @@ def cambio_de_mapa(contexto):
         mundo["enemigos"]       = enemigos or []
         if enemigos:
             inicializar_enemigos(nuevo_mapa, contexto)
-=======
-    def _cargar(nuevo_mapa, nuevo_numero, nueva_pos, nuevo_debajo):
-        mapa_actual[pos_p[0]][pos_p[1]] = (
-            "O"  # restaurar entrada en mapa viejo
-        )
-        contexto["mundo"]["mapa_actual"] = nuevo_mapa
-        contexto["mundo"]["numero_mapa"] = nuevo_numero
-        contexto["mundo"]["pos_p"] = nueva_pos
-        contexto["mundo"]["simbolo_debajo"] = nuevo_debajo
->>>>>>> origin/integracion_40
 
     # Prado (2) → Mercado (1)
     if numero_mapa == 2 and pos_p[1] == 0:
-<<<<<<< HEAD
         if _confirmar("¿Deseas entrar al Mercado? S/N: "):
             _cargar(generar_mapa_mercado_total(), 1, [30, 127], "░")
-=======
-        if _confirmar(
-            "¿Deseas entrar al Mercado? S/N: "
-        ):  # TODO integrar input con rich
-            _cargar(generar_mapa_mercado_total(), 1, [30, 128], "░")
-            contexto["mundo"]["enemigos"] = []
->>>>>>> origin/integracion_40
 
     # Prado (2) → Cementerio (3)
     elif numero_mapa == 2 and pos_p[0] == 89:
@@ -213,14 +125,8 @@ def cambio_de_mapa(contexto):
     # Cementerio (3) → Prado (2): salida sur
     elif numero_mapa == 3 and pos_p[0] == 86:
         if _confirmar("¿Deseas volver al Prado? S/N: "):
-<<<<<<< HEAD
             _cargar(generar_mapa_prado(), 2, [88, 65], "░",
                     enemigos=generar_enemigos_prado())
-=======
-            _cargar(generar_mapa_prado(), 2, [88, 65], "░")
-            contexto["mundo"]["enemigos"] = generar_enemigos_prado()
-            inicializar_slimes(contexto["mundo"]["mapa_actual"], contexto)
->>>>>>> origin/integracion_40
 
     # Cementerio (3) → Coliseo (5): salida norte (fila 2, col 65)
     elif numero_mapa == 3 and pos_p == [2, 65]:
@@ -232,7 +138,6 @@ def cambio_de_mapa(contexto):
     # Mercado (1) → Prado (2)
     elif numero_mapa == 1 and pos_p[1] == MAPA_REAL_ANCHO - 1:
         if _confirmar("¿Deseas salir del Mercado? S/N: "):
-<<<<<<< HEAD
             _cargar(generar_mapa_prado(), 2, [45, 1], "░",
                     enemigos=generar_enemigos_prado())
 
@@ -250,8 +155,3 @@ def cambio_de_mapa(contexto):
         else:
             if _confirmar("¿Deseas salir del Coliseo? S/N: "):
                 _cargar(generar_mapa_cementerio(), 3, [3, 65], simbolos_pasto[1])
-=======
-            _cargar(generar_mapa_prado(), 2, [45, 1], "░")
-            contexto["mundo"]["enemigos"] = generar_enemigos_prado()
-            inicializar_slimes(contexto["mundo"]["mapa_actual"], contexto)
->>>>>>> origin/integracion_40

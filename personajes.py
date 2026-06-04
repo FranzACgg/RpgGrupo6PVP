@@ -4,7 +4,6 @@ import msvcrt
 
 
 CLASES_DISPONIBLES = {
-<<<<<<< HEAD
     
     'Guerrero': {
         'stats_base': {
@@ -14,18 +13,6 @@ CLASES_DISPONIBLES = {
             'suerte': 0,
             'hp': 200,
             'mp': 30,
-=======
-    "Guerrero": {
-        "stats_base": {
-            "fuerza": 80,
-            "defensa": 70,
-            "magia": 10,
-            "espiritu": 20,
-            "agilidad": 40,
-            "suerte": 0,
-            "hp": 200,
-            "mp": 30,
->>>>>>> origin/integracion_40
         },
         "habilidades": [
             {
@@ -51,7 +38,6 @@ CLASES_DISPONIBLES = {
             },
         ],
     },
-<<<<<<< HEAD
     'Pirata': {
         'stats_base': {
             'fuerza': 20,
@@ -60,18 +46,6 @@ CLASES_DISPONIBLES = {
             'suerte': 0,
             'hp': 100,
             'mp': 80,
-=======
-    "Pirata": {
-        "stats_base": {
-            "fuerza": 200,
-            "defensa": 40,
-            "magia": 15,
-            "espiritu": 25,
-            "agilidad": 60,
-            "suerte": 0,
-            "hp": 100,
-            "mp": 80,
->>>>>>> origin/integracion_40
         },
         "habilidades": [
             {
@@ -97,7 +71,6 @@ CLASES_DISPONIBLES = {
             },
         ],
     },
-<<<<<<< HEAD
     'Bufon': {
         'stats_base': {
             'fuerza': 8,
@@ -106,18 +79,6 @@ CLASES_DISPONIBLES = {
             'suerte': 0,
             'hp': 90,
             'mp': 70,
-=======
-    "Bufon": {
-        "stats_base": {
-            "fuerza": 80,
-            "defensa": 25,
-            "magia": 55,
-            "espiritu": 35,
-            "agilidad": 90,
-            "suerte": 0,
-            "hp": 90,
-            "mp": 70,
->>>>>>> origin/integracion_40
         },
         "habilidades": [
             {
@@ -355,7 +316,6 @@ def mostrar_seleccion_personaje():
             if len(descripcion) > 50:
                 descripcion = descripcion[:47] + "..."
 
-<<<<<<< HEAD
             print(f'║ Nombre: {personaje_actual["nombre"]}'.ljust(53) + '║')
             print(f'║ Clase : {clase_actual}'.ljust(53) + '║')
             print(f'║ {descripcion}'.ljust(53) + '║')
@@ -364,26 +324,6 @@ def mostrar_seleccion_personaje():
             print(f'║ AGI:{sb["agilidad"]}  SUE:{sb["suerte"]}'.ljust(53) + '║')
             print('╠════════════════════════════════════════════════════╣')
             print('║ Habilidades:'.ljust(53) + '║')
-=======
-            print(f"║ Nombre: {personaje_actual['nombre']}".ljust(53) + "║")
-            print(f"║ Clase : {clase_actual}".ljust(53) + "║")
-            print(f"║ {descripcion}".ljust(53) + "║")
-            print("╠════════════════════════════════════════════════════╣")
-            print(
-                f"║ HP:{sb['hp']}  MP:{sb['mp']}  FUE:{sb['fuerza']}  DEF:{sb['defensa']}".ljust(
-                    53
-                )
-                + "║"
-            )
-            print(
-                f"║ MAG:{sb['magia']}  ESP:{sb['espiritu']}  AGI:{sb['agilidad']}  SUE:{sb['suerte']}".ljust(
-                    53
-                )
-                + "║"
-            )
-            print("╠════════════════════════════════════════════════════╣")
-            print("║ Habilidades:".ljust(53) + "║")
->>>>>>> origin/integracion_40
 
             for hab in datos["habilidades"]:
                 linea_hab = f"- {hab['nombre']} | MP:{hab['costo_mp']} | %:{hab['probabilidad']}"

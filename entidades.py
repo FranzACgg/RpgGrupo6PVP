@@ -10,7 +10,6 @@
 
 import random
 from config import (
-<<<<<<< HEAD
     MAPA_REAL_ALTO, MAPA_REAL_ANCHO,
     simbolos_pasto, simbolo_slime, simbolo_goblin,
 )
@@ -103,35 +102,6 @@ def inicializar_enemigos(mapa, contexto):
 
 
 def mover_enemigos(mapa, contexto):
-=======
-    MAPA_REAL_ALTO,
-    MAPA_REAL_ANCHO,
-    simbolos_pasto,
-    simbolo_slime,
-)
-
-
-# TODO(refactor): inicializar_slimes ya lee del contexto pero NO está conectada.
-# Conectarla al subir de nivel, junto con carga de enemigos, en:
-#   - main_mapas.py -> iniciar_mapas()
-#   - jugador.py    -> cambio_de_mapa() (al entrar al prado)
-# Secuencia correcta al entrar a un mapa con enemigos:
-#   1. generar mapa  2. contexto["enemigos"] = generar_enemigos_prado()  3. inicializar_slimes(mapa, contexto)
-
-
-def inicializar_slimes(mapa, contexto):
-    """Dibuja los slimes en su posición inicial en el mapa dado."""
-    for slime in contexto["mundo"]["enemigos"]:
-        f, c = slime["pos"]
-        mapa[f][c] = simbolo_slime  # TODO # usar "tipo": "slime"
-
-
-# TODO(deuda): el simbolo del enemigo esta fijo (simbolo_slime).
-# Deberia salir de slime["tipo"] para soportar otros enemigos (goblins, etc.) sin redibujar mal.
-
-
-def mover_slimes(mapa, contexto):
->>>>>>> origin/integracion_40
     """
     Mueve cada enemigo una celda al azar.
     No pisa al jugador ('P'), paredes ni otros enemigos.
@@ -141,15 +111,9 @@ def mover_slimes(mapa, contexto):
     dirs  = [(0, 1), (0, -1), (1, 0), (-1, 0), (0, 0)]
     celdas_libres = simbolos_pasto + ["░", "▓", "."]
 
-<<<<<<< HEAD
     for en in contexto["mundo"]["enemigos"]:
         f, c  = en["pos"]
         df, dc = random.choice(dirs)
-=======
-    for slime in contexto["mundo"]["enemigos"]:
-        f, c = slime["pos"]
-        df, dc = random.choice(direcciones)
->>>>>>> origin/integracion_40
         nf, nc = f + df, c + dc
 
         if not (0 <= nf < alto and 0 <= nc < ancho):
@@ -159,16 +123,10 @@ def mover_slimes(mapa, contexto):
         if celda not in celdas_libres:
             continue
 
-<<<<<<< HEAD
         mapa[f][c]  = en["debajo"]
         en["debajo"] = celda
         en["pos"]    = [nf, nc]
         mapa[nf][nc] = STATS_ENEMIGOS[en["tipo"]]["simbolo"]
-=======
-                # Guardar lo que hay en la nueva celda
-                slime["debajo"] = celda_destino
-                slime["pos"] = [nf, nc]
->>>>>>> origin/integracion_40
 
 
 def buscar_enemigo_en(pos, contexto):
