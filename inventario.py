@@ -16,7 +16,7 @@ ITEM_KEYS_VALUES = {
 # cuantos items mostrar por pagina
 ITEMS_POR_PAGINA = 8
 
-# tipos de items tentativos: consumible, equipable, intercambiable, clave, usable
+TIPOS = {"consumible", "equipable", "clave"}
 
 console = Console()  # Consola rich
 
@@ -42,7 +42,19 @@ def agregar_item(item, inventario):
     Salida: none. Modifica el inventario original que toma la funcion
     """
     if item.keys() != ITEM_KEYS_VALUES.keys():
-        return print("Error, el objeto ingresado no tiene las keys de un item")
+        if item.keys() - ITEM_KEYS_VALUES.keys():
+            print(
+                f"Error, {item.keys() - ITEM_KEYS_VALUES.keys()} no son keys de items"
+            )
+        if ITEM_KEYS_VALUES.keys() - item.keys():
+            print(
+                f"Error, Faltan las keys: {ITEM_KEYS_VALUES.keys() - item.keys()}"
+            )
+        return print(
+            f"Error, {item.keys() - ITEM_KEYS_VALUES.keys()} no son keys de items"
+        )
+    if item["tipo"] not in TIPOS:
+        return print("Error, el tipo de item no existe en el juego")
     i = busqueda_item_por_id(item["id_item"], inventario)
     if i != -1:
         inventario[i]["cantidad"] += 1
