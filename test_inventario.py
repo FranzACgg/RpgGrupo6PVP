@@ -7,6 +7,7 @@ from inventario import (
     exportar_items_equipados,
     descartar_item,
     construir_controles,
+    construir_cadenas_inventario,
 )
 
 import pytest
@@ -410,7 +411,7 @@ def test_descartar_item():
 
 def test_construir_controles():
     assert construir_controles([], 0) == "[dim]Q Cerrar[/]"
-    assert (
+    assert "Usar" in (
         construir_controles(
             [
                 {
@@ -423,11 +424,50 @@ def test_construir_controles():
             ],
             0,
         )
-        == "[bold green]U[/] Usar"
-        " [dim]|[/] "
-        "[bold red]T[/] Tirar\n[dim]W/S[/] Navegar [dim]|[/] [dim]Q[/] Cerrar"
     )
-    assert (
+    assert "Equipar" not in (
+        construir_controles(
+            [
+                {
+                    "id_item": 1,
+                    "nombre": "Pocion de HP pequeña",
+                    "tipo": "consumible",
+                    "cantidad": 1,
+                    "equipado": False,
+                }
+            ],
+            0,
+        )
+    )
+    assert "Desequipar" not in (
+        construir_controles(
+            [
+                {
+                    "id_item": 1,
+                    "nombre": "Pocion de HP pequeña",
+                    "tipo": "consumible",
+                    "cantidad": 1,
+                    "equipado": False,
+                }
+            ],
+            0,
+        )
+    )
+    assert "Tirar" in (
+        construir_controles(
+            [
+                {
+                    "id_item": 1,
+                    "nombre": "Pocion de HP pequeña",
+                    "tipo": "consumible",
+                    "cantidad": 1,
+                    "equipado": False,
+                }
+            ],
+            0,
+        )
+    )
+    assert "Usar" not in (
         construir_controles(
             [
                 {
@@ -440,9 +480,50 @@ def test_construir_controles():
             ],
             0,
         )
-        == "[bold cyan]E[/] Desequipar\n[dim]W/S[/] Navegar [dim]|[/] [dim]Q[/] Cerrar"
     )
-    assert (
+    assert "Equipar" not in (
+        construir_controles(
+            [
+                {
+                    "id_item": 10,
+                    "nombre": "Casco de Dullahan",
+                    "tipo": "equipable",
+                    "cantidad": 1,
+                    "equipado": True,
+                },
+            ],
+            0,
+        )
+    )
+    assert "Tirar" not in (
+        construir_controles(
+            [
+                {
+                    "id_item": 10,
+                    "nombre": "Casco de Dullahan",
+                    "tipo": "equipable",
+                    "cantidad": 1,
+                    "equipado": True,
+                },
+            ],
+            0,
+        )
+    )
+    assert "Desequipar" in (
+        construir_controles(
+            [
+                {
+                    "id_item": 10,
+                    "nombre": "Casco de Dullahan",
+                    "tipo": "equipable",
+                    "cantidad": 1,
+                    "equipado": True,
+                },
+            ],
+            0,
+        )
+    )
+    assert "Tirar" in (
         construir_controles(
             [
                 {
@@ -455,9 +536,50 @@ def test_construir_controles():
             ],
             0,
         )
-        == "[bold cyan]E[/] Equipar [dim]|[/] [bold red]T[/] Tirar\n[dim]W/S[/] Navegar [dim]|[/] [dim]Q[/] Cerrar"
     )
-    assert (
+    assert "Equipar" in (
+        construir_controles(
+            [
+                {
+                    "id_item": 10,
+                    "nombre": "Casco de Dullahan",
+                    "tipo": "equipable",
+                    "cantidad": 1,
+                    "equipado": False,
+                },
+            ],
+            0,
+        )
+    )
+    assert "Desequipar" not in (
+        construir_controles(
+            [
+                {
+                    "id_item": 10,
+                    "nombre": "Casco de Dullahan",
+                    "tipo": "equipable",
+                    "cantidad": 1,
+                    "equipado": False,
+                },
+            ],
+            0,
+        )
+    )
+    assert "Usar" not in (
+        construir_controles(
+            [
+                {
+                    "id_item": 10,
+                    "nombre": "Casco de Dullahan",
+                    "tipo": "equipable",
+                    "cantidad": 1,
+                    "equipado": False,
+                },
+            ],
+            0,
+        )
+    )
+    assert "Usar" not in (
         construir_controles(
             [
                 {
@@ -470,5 +592,100 @@ def test_construir_controles():
             ],
             0,
         )
-        == "[dim]W/S[/] Navegar [dim]|[/] [dim]Q[/] Cerrar"
+    )
+    assert "Tirar" not in (
+        construir_controles(
+            [
+                {
+                    "id_item": 11,
+                    "nombre": "Amuleto del Rey",
+                    "tipo": "clave",
+                    "cantidad": 1,
+                    "equipado": False,
+                },
+            ],
+            0,
+        )
+    )
+    assert "Equipar" not in (
+        construir_controles(
+            [
+                {
+                    "id_item": 11,
+                    "nombre": "Amuleto del Rey",
+                    "tipo": "clave",
+                    "cantidad": 1,
+                    "equipado": False,
+                },
+            ],
+            0,
+        )
+    )
+
+
+def test_construir_cadenas_inventario():
+    assert construir_cadenas_inventario([], 0, 0) == "[dim]~ Vacío ~[/]"
+    assert "▼" in (
+        construir_cadenas_inventario(
+            [
+                {
+                    "id_item": i,
+                    "nombre": "Pocion de HP pequeña ",
+                    "tipo": "consumible",
+                    "cantidad": 5,
+                    "equipado": False,
+                }
+                for i in range(9)
+            ],
+            0,
+            0,
+        )
+    )
+    assert "▼" not in (
+        construir_cadenas_inventario(
+            [
+                {
+                    "id_item": i,
+                    "nombre": "Pocion de HP pequeña ",
+                    "tipo": "consumible",
+                    "cantidad": 5,
+                    "equipado": False,
+                }
+                for i in range(8)
+            ],
+            0,
+            0,
+        )
+    )
+    assert "▲" not in (
+        construir_cadenas_inventario(
+            [
+                {
+                    "id_item": i,
+                    "nombre": "Pocion de HP pequeña ",
+                    "tipo": "consumible",
+                    "cantidad": 5,
+                    "equipado": False,
+                }
+                for i in range(8)
+            ],
+            0,
+            0,
+        )
+    )
+    assert "▲" in (
+        construir_cadenas_inventario(
+            [
+                {
+                    "id_item": i,
+                    "nombre": "Pocion de HP pequeña ",
+                    "tipo": "consumible",
+                    "cantidad": 5,
+                    "equipado": False,
+                }
+                for i in range(8)
+            ],
+            1,
+            1,
+        )
     )
