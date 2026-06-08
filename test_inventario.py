@@ -6,6 +6,7 @@ from inventario import (
     manejar_equipado_item,
     exportar_items_equipados,
     descartar_item,
+    construir_controles,
 )
 
 import pytest
@@ -17,7 +18,7 @@ def test_crear_inventario():
 
 def test_agregar_item():
     with pytest.raises(ValueError):
-        assert agregar_item(
+        agregar_item(
             {
                 "id_item": 1,
                 "nombre": "Pocion de HP pequeña",
@@ -28,7 +29,8 @@ def test_agregar_item():
             },
             [],
         )
-        assert agregar_item(
+    with pytest.raises(ValueError):
+        agregar_item(
             {
                 "id_item": 1,
                 "nombre": "Pocion de HP pequeña",
@@ -37,7 +39,8 @@ def test_agregar_item():
             },
             [],
         )
-        assert agregar_item(
+    with pytest.raises(ValueError):
+        agregar_item(
             {
                 "id_item": 1,
                 "nombre": "Pocion de HP pequeña",
@@ -402,4 +405,70 @@ def test_descartar_item():
             ],
         )
         is True
+    )
+
+
+def test_construir_controles():
+    assert construir_controles([], 0) == "[dim]Q Cerrar[/]"
+    assert (
+        construir_controles(
+            [
+                {
+                    "id_item": 1,
+                    "nombre": "Pocion de HP pequeña",
+                    "tipo": "consumible",
+                    "cantidad": 1,
+                    "equipado": False,
+                }
+            ],
+            0,
+        )
+        == "[bold green]U[/] Usar"
+        " [dim]|[/] "
+        "[bold red]T[/] Tirar\n[dim]W/S[/] Navegar [dim]|[/] [dim]Q[/] Cerrar"
+    )
+    assert (
+        construir_controles(
+            [
+                {
+                    "id_item": 10,
+                    "nombre": "Casco de Dullahan",
+                    "tipo": "equipable",
+                    "cantidad": 1,
+                    "equipado": True,
+                },
+            ],
+            0,
+        )
+        == "[bold cyan]E[/] Desequipar\n[dim]W/S[/] Navegar [dim]|[/] [dim]Q[/] Cerrar"
+    )
+    assert (
+        construir_controles(
+            [
+                {
+                    "id_item": 10,
+                    "nombre": "Casco de Dullahan",
+                    "tipo": "equipable",
+                    "cantidad": 1,
+                    "equipado": False,
+                },
+            ],
+            0,
+        )
+        == "[bold cyan]E[/] Equipar [dim]|[/] [bold red]T[/] Tirar\n[dim]W/S[/] Navegar [dim]|[/] [dim]Q[/] Cerrar"
+    )
+    assert (
+        construir_controles(
+            [
+                {
+                    "id_item": 11,
+                    "nombre": "Amuleto del Rey",
+                    "tipo": "clave",
+                    "cantidad": 1,
+                    "equipado": False,
+                },
+            ],
+            0,
+        )
+        == "[dim]W/S[/] Navegar [dim]|[/] [dim]Q[/] Cerrar"
     )
