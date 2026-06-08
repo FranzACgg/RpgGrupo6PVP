@@ -18,6 +18,7 @@ from inventario import (
     agregar_item,
     busqueda_item_por_id,
     usar_item,
+    manejar_equipado_item,
 )
 
 import pytest
@@ -150,10 +151,10 @@ def test_busqueda_item_por_id():
 
 
 def test_usar_item():
-    assert usar_item(-1, []) is None
+    assert usar_item(1, []) is None
     assert (
         usar_item(
-            0,
+            8,
             [
                 {
                     "id_item": 8,
@@ -167,7 +168,7 @@ def test_usar_item():
     ) is None
     assert (
         usar_item(
-            0,
+            1,
             [
                 {
                     "id_item": 1,
@@ -215,3 +216,82 @@ def test_usar_item():
         "cantidad": 4,
         "equipado": False,
     }
+
+
+def test_manejar_equipado_item():
+    assert manejar_equipado_item(1, []) is None
+    assert (
+        manejar_equipado_item(
+            1,
+            [
+                {
+                    "id_item": 1,
+                    "nombre": "Pocion de HP pequeña",
+                    "tipo": "consumible",
+                    "cantidad": 4,
+                    "equipado": False,
+                }
+            ],
+        )
+        is None
+    )
+    assert (
+        manejar_equipado_item(
+            8,
+            [
+                {
+                    "id_item": 8,
+                    "nombre": "Lanza Maldita",
+                    "tipo": "equipable",
+                    "cantidad": 0,
+                    "equipado": False,
+                }
+            ],
+        )
+        is None
+    )
+    assert manejar_equipado_item(
+        8,
+        [
+            {
+                "id_item": 8,
+                "nombre": "Lanza Maldita",
+                "tipo": "equipable",
+                "cantidad": 1,
+                "equipado": False,
+            }
+        ],
+    ) == {
+        "id_item": 8,
+        "nombre": "Lanza Maldita",
+        "tipo": "equipable",
+        "cantidad": 1,
+        "equipado": True,
+    }
+    assert manejar_equipado_item(
+        8,
+        [
+            {
+                "id_item": 8,
+                "nombre": "Lanza Maldita",
+                "tipo": "equipable",
+                "cantidad": 1,
+                "equipado": True,
+            }
+        ],
+    ) == {
+        "id_item": 8,
+        "nombre": "Lanza Maldita",
+        "tipo": "equipable",
+        "cantidad": 1,
+        "equipado": False,
+    }
+
+
+"""def test_exportar_items_equipados():
+    return exportar_items_equipados()"""
+
+
+"""
+def test_descartar_item():
+    return descartar_item()"""
