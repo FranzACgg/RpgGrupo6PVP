@@ -1,24 +1,11 @@
-"""
-Grupo 1 — operan sobre el inventario y devuelven algo o lo modifican:
-crear_inventario, agregar_item, busqueda_item_por_id, usar_item, manejar_equipado_item, exportar_items_equipados, descartar_item
-
-    items_prueba = [
-        {
-            "id_item": 1,
-            "nombre": "Pocion de HP pequeña",
-            "tipo": "consumible",
-            "cantidad": 5,
-            "equipado": False,
-        },
-
-"""
-
 from inventario import (
     crear_inventario,
     agregar_item,
     busqueda_item_por_id,
     usar_item,
     manejar_equipado_item,
+    exportar_items_equipados,
+    descartar_item,
 )
 
 import pytest
@@ -288,10 +275,131 @@ def test_manejar_equipado_item():
     }
 
 
-"""def test_exportar_items_equipados():
-    return exportar_items_equipados()"""
+def test_exportar_items_equipados():
+    assert exportar_items_equipados([]) == []
+    assert (
+        exportar_items_equipados(
+            [
+                {
+                    "id_item": 1,
+                    "nombre": "Pocion de HP pequeña",
+                    "tipo": "consumible",
+                    "cantidad": 4,
+                    "equipado": False,
+                }
+            ]
+        )
+        == []
+    )
+    assert exportar_items_equipados(
+        [
+            {
+                "id_item": 1,
+                "nombre": "Pocion de HP pequeña",
+                "tipo": "consumible",
+                "cantidad": 4,
+                "equipado": False,
+            },
+            {
+                "id_item": 8,
+                "nombre": "Lanza Maldita",
+                "tipo": "equipable",
+                "cantidad": 1,
+                "equipado": False,
+            },
+            {
+                "id_item": 10,
+                "nombre": "Casco de Dullahan",
+                "tipo": "equipable",
+                "cantidad": 1,
+                "equipado": True,
+            },
+        ]
+    ) == [
+        {
+            "id_item": 10,
+            "nombre": "Casco de Dullahan",
+            "tipo": "equipable",
+            "cantidad": 1,
+            "equipado": True,
+        },
+    ]
 
 
-"""
 def test_descartar_item():
-    return descartar_item()"""
+    assert descartar_item(1, []) is False
+    assert (
+        descartar_item(
+            11,
+            [
+                {
+                    "id_item": 11,
+                    "nombre": "Amuleto del Rey",
+                    "tipo": "clave",
+                    "cantidad": 1,
+                    "equipado": False,
+                },
+            ],
+        )
+        is False
+    )
+    assert (
+        descartar_item(
+            10,
+            [
+                {
+                    "id_item": 10,
+                    "nombre": "Casco de Dullahan",
+                    "tipo": "equipable",
+                    "cantidad": 1,
+                    "equipado": True,
+                },
+            ],
+        )
+        is False
+    )
+    assert (
+        descartar_item(
+            8,
+            [
+                {
+                    "id_item": 8,
+                    "nombre": "Lanza Maldita",
+                    "tipo": "equipable",
+                    "cantidad": 0,
+                    "equipado": False,
+                }
+            ],
+        )
+        is False
+    )
+    assert (
+        descartar_item(
+            1,
+            [
+                {
+                    "id_item": 1,
+                    "nombre": "Pocion de HP pequeña",
+                    "tipo": "consumible",
+                    "cantidad": 4,
+                    "equipado": False,
+                }
+            ],
+        )
+        is True
+    )
+    assert (
+        descartar_item(
+            1,
+            [
+                {
+                    "id_item": 1,
+                    "nombre": "Pocion de HP pequeña",
+                    "tipo": "consumible",
+                    "cantidad": 1,
+                    "equipado": False,
+                }
+            ],
+        )
+        is True
+    )
