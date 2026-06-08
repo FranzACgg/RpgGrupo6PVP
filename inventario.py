@@ -39,29 +39,29 @@ def agregar_item(item, inventario):
         item: Diccionario con el item a agregar al inventario
         inventario: Lista con todos los items en el inventario
     Objetivo: Agregar item al inventario
-    Salida: none. Modifica el inventario original que toma la funcion
+    Salida: True si agrega item al inventario, False si esta lleno.
     """
+    mensaje = ""
     if item.keys() != ITEM_KEYS_VALUES.keys():
         if item.keys() - ITEM_KEYS_VALUES.keys():
-            print(
-                f"Error, {item.keys() - ITEM_KEYS_VALUES.keys()} no son keys de items"
-            )
+            mensaje += f"{item.keys() - ITEM_KEYS_VALUES.keys()} no son keys de items\n"
         if ITEM_KEYS_VALUES.keys() - item.keys():
-            print(
-                f"Error, Faltan las keys: {ITEM_KEYS_VALUES.keys() - item.keys()}"
+            mensaje += (
+                f"Faltan las keys: {ITEM_KEYS_VALUES.keys() - item.keys()} \n"
             )
-        return print(
-            f"Error, {item.keys() - ITEM_KEYS_VALUES.keys()} no son keys de items"
-        )
-    if item["tipo"] not in TIPOS:
-        return print("Error, el tipo de item no existe en el juego")
+    if "tipo" in item and item["tipo"] not in TIPOS:
+        mensaje += f"El tipo de item {item['tipo']} no existe en el juego\n"
+    if mensaje:
+        raise ValueError(mensaje)
     i = busqueda_item_por_id(item["id_item"], inventario)
     if i != -1:
         inventario[i]["cantidad"] += 1
+        return True
     else:
         if len(inventario) >= INVENTARIO_MAXIMO:
-            return print("Inventario lleno")
+            return False
         inventario.append(item.copy())
+        return True
 
 
 def busqueda_item_por_id(id_item, inventario):

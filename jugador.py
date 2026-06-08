@@ -45,11 +45,9 @@ def mover(tecla, contexto):
 
     celda_destino = mapa_actual[nueva_f][nueva_c]
 
-    # Colisión con paredes
     if celda_destino in (simbolos_entorno[3], simbolos_entorno[2]):
         return
 
-    # Recoger ítem — usa el sistema nuevo de inventario.py
     if celda_destino == simbolos_especiales[1]:
         respuesta = input(
             "¿Deseas Recoger el Objeto? S/N: "
