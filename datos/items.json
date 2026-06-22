@@ -1,0 +1,128 @@
+[
+    {
+        "id_item": 1,
+        "nombre": "Pocion de Fuerza Grande",
+        "tipo": "consumible",
+        "cantidad": 1,
+        "equipado": false
+    },
+    {
+        "id_item": 2,
+        "nombre": "Pocion de HP pequeña",
+        "tipo": "consumible",
+        "cantidad": 1,
+        "equipado": false
+    },
+    {
+        "id_item": 3,
+        "nombre": "Pocion de HP Grande",
+        "tipo": "consumible",
+        "cantidad": 1,
+        "equipado": false
+    },
+    {
+        "id_item": 4,
+        "nombre": "Gema de vida",
+        "tipo": "equipable",
+        "cantidad": 1,
+        "equipado": false
+    },
+    {
+        "id_item": 5,
+        "nombre": "Hacha de Mitril",
+        "tipo": "equipable",
+        "cantidad": 1,
+        "equipado": false
+    },
+    {
+        "id_item": 6,
+        "nombre": "Latigo con Puas",
+        "tipo": "equipable",
+        "cantidad": 1,
+        "equipado": false
+    },
+    {
+        "id_item": 7,
+        "nombre": "Escudo de Obsidiana",
+        "tipo": "equipable",
+        "cantidad": 1,
+        "equipado": false
+    },
+    {
+        "id_item": 8,
+        "nombre": "Caso de Tungsteno",
+        "tipo": "equipable",
+        "cantidad": 1,
+        "equipado": false
+    },
+    {
+        "id_item": 9,
+        "nombre": "Pechera de escamas de Dragon",
+        "tipo": "equipable",
+        "cantidad": 1,
+        "equipado": false
+    },
+    {
+        "id_item": 10,
+        "nombre": "Pocion Alucinogena",
+        "tipo": "consumible",
+        "cantidad": 1,
+        "equipado": false
+    },
+    {
+        "id_item": 11,
+        "nombre": "Pocion de Potencia/Impotencia",
+        "tipo": "consumible",
+        "cantidad": 1,
+        "equipado": false
+    },
+    {
+        "id_item": 12,
+        "nombre": "Pocion de I have no enemies",
+        "tipo": "consumible",
+        "cantidad": 1,
+        "equipado": false
+    },
+    {
+        "id_item": 13,
+        "nombre": "Escudo del Heroe ;)",
+        "tipo": "equipable",
+        "cantidad": 1,
+        "equipado": false
+    },
+    {
+        "id_item": 14,
+        "nombre": "Lanza Maldita",
+        "tipo": "equipable",
+        "cantidad": 1,
+        "equipado": false
+    },
+    {
+        "id_item": 15,
+        "nombre": "Espada de Doble Filo Maldita",
+        "tipo": "equipable",
+        "cantidad": 1,
+        "equipado": false
+    },
+    {
+        "id_item": 16,
+        "nombre": "Collar Paralizante",
+        "tipo": "equipable",
+        "cantidad": 1,
+        "equipado": false
+    },
+    {
+        "id_item": 17,
+        "nombre": "Guantes Benevolentes",
+        "tipo": "equipable",
+        "cantidad": 1,
+        "equipado": false
+    },
+    {
+        "id_item": 18,
+        "nombre": "Casco de Dullahan",
+        "tipo": "equipable",
+        "cantidad": 1,
+        "equipado": false
+    }
+]
