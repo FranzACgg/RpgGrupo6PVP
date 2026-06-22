@@ -8,13 +8,13 @@ from config import (
     simbolos_pasto,
     simbolos_especiales,
     TECLAS_MOVIMIENTO,
-    items_mapa,
 )
 from mapa_prado import generar_mapa_prado, generar_enemigos_prado
 from mapa_mercado import generar_mapa_mercado_total
 from mapa_cementerio import generar_mapa_cementerio
 from inventario import agregar_item
 from entidades import inicializar_slimes
+from catalogo import item_aleatorio
 
 
 # ─── Movimiento ───────────────────────────────────────────────────────────────
@@ -53,8 +53,7 @@ def mover(tecla, contexto):
             "¿Deseas Recoger el Objeto? S/N: "
         )  # TODO integrar input a rich
         if respuesta.lower() == "s":
-            clave = random.choice(list(items_mapa.keys()))
-            item_base = random.choice(items_mapa[clave])
+            item_base = item_aleatorio()
             agregar_item(item_base, contexto["inventario"])
 
     # 1. Restaurar celda anterior
