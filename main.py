@@ -8,11 +8,13 @@ from main_mapas import iniciar_mapas
 from config import crear_contexto
 from estados import EXPLORACION
 from motor import manejar_estados
+from catalogo import cargar_catalogo
 
 
 def main():
     # ── 1. Crear contexto ─────────────────────────────────────────────────────
     contexto = crear_contexto()
+    cargar_catalogo()
 
     # ── 2. Menú principal ─────────────────────────────────────────────────────
     accion = menu_principal()
