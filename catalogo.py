@@ -11,7 +11,7 @@ _catalogo = []
 
 def cargar_catalogo():
     try:
-        with open(RUTA_ITEMS, "rt") as archivo_items:
+        with open(RUTA_ITEMS, "rt", encoding="utf-8") as archivo_items:
             datos_items = json.load(archivo_items)
             _catalogo.clear()
             _catalogo.extend(datos_items)
