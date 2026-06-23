@@ -138,9 +138,25 @@ def buscar_enemigo_en(pos, contexto):
 
 
 def eliminar_enemigo(enemigo, mapa, contexto):
-    """Elimina el enemigo del mapa y de la lista de enemigos."""
+    """
+    Elimina el enemigo del mapa y de la lista.
+    Además dropea el item de quest correspondiente al inventario:
+      slime  → Baba de Slime    (id 51)
+      goblin → Cabeza de Goblin (id 52)
+    """
     f, c = enemigo["pos"]
     mapa[f][c] = enemigo["debajo"]
     if enemigo in contexto["mundo"]["enemigos"]:
         contexto["mundo"]["enemigos"].remove(enemigo)
     contexto["progreso"]["enemigos_derrotados"] += 1
+
+    # Drop de quest
+    from inventario import agregar_item
+    drops = {
+        "slime":  {"id_item": 51, "nombre": "Baba de Slime",
+                   "tipo": "clave", "cantidad": 1, "equipado": False},
+        "goblin": {"id_item": 52, "nombre": "Cabeza de Goblin",
+                   "tipo": "clave", "cantidad": 1, "equipado": False},
+    }
+    if enemigo["tipo"] in drops:
+        agregar_item(drops[enemigo["tipo"]], contexto["inventario"])

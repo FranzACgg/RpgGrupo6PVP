@@ -1,20 +1,25 @@
-# jugador.py — Movimiento del jugador, cambio de mapa y disparo de combate
+# jugador.py — Movimiento, interacción con NPCs, cofres, tumbas y cambio de mapa
 
 import random
 from config import (
     MAPA_REAL_ALTO, MAPA_REAL_ANCHO,
     simbolos_entorno, simbolos_pasto, simbolos_especiales,
-    TECLAS_MOVIMIENTO, items_mapa,
+    TECLAS_MOVIMIENTO, TECLAS_ACCION, items_mapa,
 )
 from mapa_prado       import generar_mapa_prado
-from mapa_mercado     import generar_mapa_mercado_total
-from mapa_cementerio  import generar_mapa_cementerio
-from mapa_cueva       import generar_mapa_cueva, CUEVA_ALTO, CUEVA_ANCHO
+from mapa_mercado     import generar_mapa_mercado_total, get_cofres_mercado
+from mapa_cementerio  import generar_mapa_cementerio, POS_TUMBAS_EXCAVABLES
+from mapa_cueva       import generar_mapa_cueva, CUEVA_ALTO, CUEVA_ANCHO, POS_COFRE_CUEVA
 from mapa_coliseo     import generar_mapa_coliseo, COLISEO_ALTO, COLISEO_ANCHO
 from inventario       import agregar_item
 from entidades        import (
     buscar_enemigo_en, inicializar_enemigos,
     generar_enemigos_prado, generar_enemigos_cueva, generar_enemigo_coliseo,
+)
+from aldeanos         import buscar_aldeano_en, mostrar_dialogo, SIMBOLO_ALDEANO
+from cofres           import (
+    abrir_cofre, excavar_tumba,
+    SIMBOLO_COFRE, SIMBOLO_TUMBA_EXCAVABLE,
 )
 
 
@@ -41,8 +46,27 @@ def mover(tecla, contexto, obtener_tecla_fn=None):
     celda_destino = mapa_actual[nueva_f][nueva_c]
 
     # Colisión con paredes
-    if celda_destino in (simbolos_entorno[3], simbolos_entorno[2], "#"):
+    if celda_destino in (simbolos_entorno[3], simbolos_entorno[2], "#", "▒"):
         return
+
+    # ── NPC aldeano: no se puede pisar, se interactúa con 'E' adyacente ──────
+    if celda_destino == SIMBOLO_ALDEANO:
+        aldeano = buscar_aldeano_en([nueva_f, nueva_c], contexto)
+        if aldeano:
+            mostrar_dialogo(aldeano, contexto["inventario"])
+        return   # el jugador no se mueve encima del NPC
+
+    # ── Cofre ─────────────────────────────────────────────────────────────────
+    if celda_destino == SIMBOLO_COFRE:
+        abrir_cofre(contexto["inventario"], mapa_actual, [nueva_f, nueva_c])
+        # El cofre ya fue reemplazado por '.' en abrir_cofre
+        celda_destino = mapa_actual[nueva_f][nueva_c]
+
+    # ── Tumba excavable ───────────────────────────────────────────────────────
+    if celda_destino == SIMBOLO_TUMBA_EXCAVABLE:
+        excavar_tumba(contexto["inventario"], mapa_actual, [nueva_f, nueva_c])
+        celda_destino = mapa_actual[nueva_f][nueva_c]
+        return   # no nos movemos encima de la tumba
 
     # ── Encuentro con enemigo ─────────────────────────────────────────────────
     enemigo = buscar_enemigo_en([nueva_f, nueva_c], contexto)
@@ -50,18 +74,14 @@ def mover(tecla, contexto, obtener_tecla_fn=None):
         from pantalla_batalla import iniciar_batalla
         gano = iniciar_batalla(enemigo, mapa_actual, contexto, obtener_tecla_fn)
         if not gano:
-            return   # escapó o murió → no se mueve
-        # El enemigo ya fue eliminado del mapa por iniciar_batalla.
-        # Actualizamos celda_destino con lo que quedó (el "debajo" restaurado).
+            return
         celda_destino = mapa_actual[nueva_f][nueva_c]
 
-    # ── Recoger ítem ──────────────────────────────────────────────────────────
+    # ── Recoger ítem '*' ──────────────────────────────────────────────────────
     if celda_destino == simbolos_especiales[1]:
-        respuesta = input(
-            "¿Deseas Recoger el Objeto? S/N: "
-        )  # TODO integrar input a rich
+        respuesta = input("¿Deseas Recoger el Objeto? S/N: ")
         if respuesta.lower() == "s":
-            clave = random.choice(list(items_mapa.keys()))
+            clave     = random.choice(list(items_mapa.keys()))
             item_base = random.choice(items_mapa[clave])
             agregar_item(item_base, contexto["inventario"])
 
@@ -76,7 +96,7 @@ def mover(tecla, contexto, obtener_tecla_fn=None):
         mundo["simbolo_debajo"] = celda_destino
 
     pos_p[0], pos_p[1] = nueva_f, nueva_c
-    mapa_actual[pos_p[0]][pos_p[1]] = simbolos_especiales[0]  # P
+    mapa_actual[pos_p[0]][pos_p[1]] = simbolos_especiales[0]   # P
 
 
 def cambio_de_mapa(contexto):
@@ -113,7 +133,6 @@ def cambio_de_mapa(contexto):
     elif numero_mapa == 2 and pos_p[0] == 89:
         if _confirmar("¿Deseas entrar al Cementerio? S/N: "):
             _cargar(generar_mapa_cementerio(), 3, [85, 73], simbolos_pasto[1])
-            contexto["mundo"]["enemigos"] = []
 
     # Prado (2) → Cueva (4)
     elif numero_mapa == 2 and pos_p == [12, 10]:
@@ -122,13 +141,13 @@ def cambio_de_mapa(contexto):
                     alto=CUEVA_ALTO, ancho=CUEVA_ANCHO,
                     enemigos=generar_enemigos_cueva())
 
-    # Cementerio (3) → Prado (2): salida sur
+    # Cementerio (3) → Prado (2)
     elif numero_mapa == 3 and pos_p[0] == 86:
         if _confirmar("¿Deseas volver al Prado? S/N: "):
             _cargar(generar_mapa_prado(), 2, [88, 65], "░",
                     enemigos=generar_enemigos_prado())
 
-    # Cementerio (3) → Coliseo (5): salida norte (fila 2, col 65)
+    # Cementerio (3) → Coliseo (5)
     elif numero_mapa == 3 and pos_p == [2, 65]:
         if _confirmar("¿Deseas entrar al Coliseo? S/N: "):
             _cargar(generar_mapa_coliseo(), 5, [40, 40], "░",
@@ -147,10 +166,9 @@ def cambio_de_mapa(contexto):
             _cargar(generar_mapa_prado(), 2, [12, 11], ".",
                     enemigos=generar_enemigos_prado())
 
-    # Coliseo (5) → Cementerio (3): salida sur (fila 40 es la entrada)
+    # Coliseo (5) → Cementerio (3)
     elif numero_mapa == 5 and pos_p == [40, 40]:
         if mundo["enemigos"]:
-            # El jefe sigue vivo, no se puede salir fácil
             print("¡El Campeón bloquea tu salida! Debes vencerlo.")
         else:
             if _confirmar("¿Deseas salir del Coliseo? S/N: "):

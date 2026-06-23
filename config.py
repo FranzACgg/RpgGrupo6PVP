@@ -21,6 +21,9 @@ simbolos_entornos_no_remplazables = [
     "💀", "⛏",
     "J",        # jefe coliseo
     "I",        # columna coliseo
+    "@",        # aldeano/NPC
+    "C",        # cofre (mercado y cueva)
+    "✦",        # tumba excavable
 ]
 
 simbolo_slime  = "ζ"
@@ -69,6 +72,8 @@ ESTILOS = {
     "⛏": "bold grey70",
     "J":  "bold red on dark_red",   # jefe coliseo
     "I":  "bold grey50",             # columna coliseo
+    "@":  "bold yellow on dark_blue",  # aldeano
+    "✦":  "bold cyan",                 # tumba excavable
 }
 
 TECLAS_MOVIMIENTO = ['w', 'a', 's', 'd']
@@ -213,6 +218,16 @@ items_mapa = {
             "cantidad": 1,
             "equipado": False,
         },
+    ],
+    # ── Items de quest (drops y recompensas) ─────────────────────────────────
+    "Quest drops": [
+        {"id_item": 51, "nombre": "Baba de Slime",       "tipo": "clave", "cantidad": 1, "equipado": False},
+        {"id_item": 52, "nombre": "Cabeza de Goblin",     "tipo": "clave", "cantidad": 1, "equipado": False},
+    ],
+    "Recompensas quest": [
+        {"id_item": 60, "nombre": "Elixir del Pantano",   "tipo": "consumible", "cantidad": 1, "equipado": False},
+        {"id_item": 61, "nombre": "Amuleto del Nigromante","tipo": "equipable",  "cantidad": 1, "equipado": False},
+        {"id_item": 50, "nombre": "Pala Sagrada",          "tipo": "clave",      "cantidad": 1, "equipado": False},
     ],
 }
 
