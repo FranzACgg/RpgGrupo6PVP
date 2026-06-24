@@ -214,10 +214,8 @@ def construir_cadenas_inventario(inventario, cursor, desvio_cursor):
                 selector = "  "
 
             nombre = inventario[i]["nombre"]
-            cantidad = f"x{inventario[i]['cantidad']}"
-            equipado = (
-                r" [bold cyan]\[E][/]" if inventario[i]["equipado"] else ""
-            )  #
+            cantidad = f'x{inventario[i]["cantidad"]}'
+            equipado = ' [bold cyan]\\[E][/]' if inventario[i]["equipado"] else '' # 
 
             if i == cursor:
                 cadenas.append(

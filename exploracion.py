@@ -1,5 +1,5 @@
 from estados import EXPLORACION
-from entidades import mover_slimes
+from entidades import mover_enemigos
 from ui import dibujar_juego_centrado
 from jugador import cambio_de_mapa
 from main_mapas import (
@@ -22,6 +22,6 @@ def manejar_exploracion(contexto):
         if contexto["mundo"]["numero_mapa"] == 2:
             contexto["mundo"]["pasos_jugador"] += 1
             if contexto["mundo"]["pasos_jugador"] % 2 == 0:
-                mover_slimes(contexto["mundo"]["mapa_actual"], contexto)
+                mover_enemigos(contexto["mundo"]["mapa_actual"], contexto)
 
         cambio_de_mapa(contexto)

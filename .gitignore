@@ -1,7 +1,6 @@
-# saves/ guarda el estado del jugador (partida en curso y progreso permanente).
-# Es personal de cada jugador, no debe ir al repo.
-# Pero la carpeta tiene que existir al clonar para que el juego pueda escribir ahí,
-# así que la mantenemos viva con un archivo centinela .gitkeep.
+# Saves del jugador: no van al repo, pero la carpeta debe existir
 partidas/*
 !partidas/.gitkeep
 
+# Bytecode de Python
+__pycache__/
