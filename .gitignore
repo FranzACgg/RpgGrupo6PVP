@@ -2,5 +2,6 @@
 # Es personal de cada jugador, no debe ir al repo.
 # Pero la carpeta tiene que existir al clonar para que el juego pueda escribir ahí,
 # así que la mantenemos viva con un archivo centinela .gitkeep.
-saves/*
-!saves/.gitkeep
+partidas/*
+!partidas/.gitkeep
+
