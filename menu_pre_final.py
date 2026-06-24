@@ -1,5 +1,6 @@
 import os
 import msvcrt
+from persistencia import existe_partida_guardada
 
 # Definimos el ancho de banda visual para que el centrado sea prolijo en toda la interfaz
 ANCHO_UI = 80
@@ -76,50 +77,62 @@ def mostrar_creditos():
     msvcrt.getch()
 
 
-def menu_principal():
-    # Estructura de datos (lista) para gestionar los estados del menu
-    opciones = ["EMPEZAR", "SALÓN DE HÉROES", "CRÉDITOS", "SALIR"]
-    cursor = (
-        0  # Puntero entero que rastrea el indice de la opcion seleccionada
-    )
+def confirmar_sobrescribir():
+    limpiar()
+    print(f"{'YA EXISTE UNA PARTIDA GUARDADA':^80}")
+    print("-" * ANCHO_UI)
+    print(f"{'Si empezás una nueva, se borra la guardada.':^80}")
+    print(f"{'¿Continuar? [S/N]':^80}")
+    tecla = msvcrt.getch().decode("utf-8").lower()
+    return tecla == "s"
 
+
+def menu_principal():
+    cursor = 0
     while True:
+        # Las opciones se arman cada vuelta: CONTINUAR solo aparece si hay save
+        opciones = []
+        if existe_partida_guardada():
+            opciones.append("CONTINUAR")
+        opciones.append("NUEVA PARTIDA")
+        opciones.append("SALÓN DE HÉROES")
+        opciones.append("CRÉDITOS")
+        opciones.append("SALIR")
+
+        # Si cambió la cantidad de opciones, evitamos que el cursor quede afuera
+        if cursor >= len(opciones):
+            cursor = len(opciones) - 1
+
         limpiar()
         mostrar_logo()
-
         print(f"{'MENU PRINCIPAL':^80}")
         print("-" * ANCHO_UI)
-
-        # Iteramos con range y len para renderizar la opción con feedback visual
         for i in range(len(opciones)):
             if i == cursor:
-                # Si el índice coincide con el puntero, le metemos las flechitas
                 print(f"  ==>  [ {opciones[i]} ]  <==  ".center(ANCHO_UI))
             else:
                 print(f"       {opciones[i]}       ".center(ANCHO_UI))
-
         print("-" * ANCHO_UI)
         print(f"{'[W/S] Moverse  -  [Enter] Seleccionar':^80}")
 
-        # Capturamos la tecla que toca el usuario
-        # .decode('utf-8') sirve para pasar el dato de la tecla a texto comun
         tecla = msvcrt.getch().decode("utf-8").lower()
-
-        # Logica para mover el cursor (subir o bajar en la lista)
         if tecla == "w" and cursor > 0:
             cursor -= 1
         elif tecla == "s" and cursor < len(opciones) - 1:
             cursor += 1
-        elif tecla == "\r":  # El caracter '\r' representa la tecla Enter
-            if cursor == 0:
-                print(f"\n{'CARGANDO AVENTURA...':^80}")
-                return "empezar"  # Sale del menu para empezar el juego
-            elif cursor == 1:
+        elif tecla == "\r":
+            seleccion = opciones[cursor]
+            if seleccion == "CONTINUAR":
+                return "continuar"
+            elif seleccion == "NUEVA PARTIDA":
+                if existe_partida_guardada() and not confirmar_sobrescribir():
+                    continue
+                return "nueva"
+            elif seleccion == "SALÓN DE HÉROES":
                 mostrar_salon_heroes()
-            elif cursor == 2:
+            elif seleccion == "CRÉDITOS":
                 mostrar_creditos()
-            elif cursor == 3:
-                print(f"\n{'CERRANDO EL LIBRO DE GLASSTION...':^80}")
+            elif seleccion == "SALIR":
                 return "salir"
 
 
