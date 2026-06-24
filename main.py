@@ -1,5 +1,4 @@
 # main.py — Punto de entrada de GLASSTION
-# Flujo: Menú principal → Selección de personaje → Juego
 
 from menu_pre_final import menu_principal
 from personajes import mostrar_seleccion_personaje, crear_personaje
@@ -9,36 +8,53 @@ from config import crear_contexto
 from estados import EXPLORACION
 from motor import manejar_estados
 from catalogo import cargar_catalogo
+from persistencia import cargar_partida, cargar_progreso
 
 
-def main():
-    # ── 1. Crear contexto ─────────────────────────────────────────────────────
+def iniciar_nueva_partida():
+    """Crea un contexto nuevo con el personaje elegido.
+    Devuelve el contexto listo para jugar, o None si el jugador canceló."""
     contexto = crear_contexto()
-    cargar_catalogo()
 
-    # ── 2. Menú principal ─────────────────────────────────────────────────────
-    accion = menu_principal()
-    if accion != "empezar":
-        return  # El jugador eligió Salir
-
-    # ── 3. Selección de personaje ─────────────────────────────────────────────
     seleccion = mostrar_seleccion_personaje()
     if seleccion is None:
-        return
+        return None
 
     personaje = crear_personaje(seleccion["nombre"], seleccion["clase"])
     if personaje is None:
         print("Error al crear el personaje.")
-        return
+        return None
 
-    # ── 4. Cargar personaje en el contexto ───────────────────────────────
     contexto["personaje"] = personaje
     contexto["inventario"] = crear_inventario()
-
-    # ── 5. Generar mapa inicial y arrancar ────────────────────────────────────
     iniciar_mapas(contexto)
     contexto["estado_actual"] = EXPLORACION
-    manejar_estados(contexto)  # bucle principal
+    return contexto
+
+
+def main():
+    cargar_catalogo()
+    progreso = (
+        cargar_progreso()
+    )  # TODO: usar para mostrar/ocultar la 4ª clase en selección
+
+    accion = menu_principal()
+
+    if accion == "salir":
+        return
+
+    if accion == "continuar":
+        contexto = cargar_partida()
+        if contexto is None:
+            # El save no estaba o estaba corrupto → arrancamos una nueva
+            contexto = iniciar_nueva_partida()
+    else:  # "nueva"
+        contexto = iniciar_nueva_partida()
+
+    if contexto is None:
+        return
+
+    manejar_estados(contexto)
 
 
 if __name__ == "__main__":
