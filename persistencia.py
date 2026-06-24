@@ -4,6 +4,7 @@ import json
 RUTA_ACTUAL = os.path.dirname(__file__)
 RUTA_PARTIDA = os.path.join(RUTA_ACTUAL, "partidas", "partida.json")
 RUTA_PROGRESO = os.path.join(RUTA_ACTUAL, "partidas", "progreso.json")
+PROGRESO_DEFAULT = {"clase_oculta_desbloqueada": False}
 
 
 def _serializar_contexto(contexto):
@@ -33,14 +34,15 @@ def guardar_partida(contexto):
 
 
 def cargar_partida():
-    contexto = {}
     try:
-        with open(RUTA_PARTIDA, "rt") as partida:
-            json.load(contexto, partida)
-        copia = _deserializar_contexto(contexto)
-        return copia
+        with open(RUTA_PARTIDA, "rt", encoding="utf-8") as partida:
+            contexto = json.load(partida)
+        contexto = _deserializar_contexto(contexto)
+        return contexto
     except FileNotFoundError:
-        pass
+        return None
+    except json.JSONDecodeError:
+        return None
 
 
 def existe_partida_guardada():
@@ -50,21 +52,24 @@ def existe_partida_guardada():
 def borrar_partida():
     try:
         os.remove(RUTA_PARTIDA)
+        return True
     except FileNotFoundError:
-        pass
+        return True
 
 
 def guardar_progreso(progreso):
     try:
-        with open(RUTA_PROGRESO, "wt") as progreso:
-            pass
-    except FileNotFoundError:
-        pass
+        with open(RUTA_PROGRESO, "wt", encoding="utf-8") as progreso_json:
+            json.dump(progreso, progreso_json, indent=4)
+        return True
+    except IOError:
+        return False
 
 
 def cargar_progreso():
     try:
-        with open(RUTA_PROGRESO, "rt") as progreso:
-            pass
+        with open(RUTA_PROGRESO, "rt", encoding="utf-8") as progreso_json:
+            progreso = json.load(progreso_json)
+        return progreso
     except FileNotFoundError:
-        pass
+        return PROGRESO_DEFAULT.copy()
