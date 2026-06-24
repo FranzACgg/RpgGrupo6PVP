@@ -4,6 +4,7 @@ import os
 from rich.console import Console
 from rich.panel import Panel
 from rich.align import Align
+from persistencia import guardar_partida
 
 from config import (
     CAMARA_ALTO,
@@ -91,6 +92,7 @@ def pantalla_menu_en_juego(obtener_tecla_fn, contexto):
         print("║     MENÚ DE OPCIONES     ║")
         print("╠══════════════════════════╣")
         print("║  I  →  Inventario        ║")
+        print("║  G  →  Guardar partida   ║")
         print("║  V  →  Volver al juego   ║")
         print("║  Q  →  Salir             ║")
         print("╚══════════════════════════╝")
@@ -102,6 +104,14 @@ def pantalla_menu_en_juego(obtener_tecla_fn, contexto):
 
         elif opcion == "v":
             en_menu = False
+
+        elif opcion == "g":  # g — guardar partida
+            if guardar_partida(contexto):
+                print("\n  Partida guardada con éxito.")
+            else:
+                print("\n  No se pudo guardar la partida.")
+            print("  Presioná cualquier tecla para continuar...")
+            obtener_tecla_fn()
 
         elif opcion == TECLAS_ACCION[2]:  # q — salir
             contexto["estado_actual"] = SALIR
