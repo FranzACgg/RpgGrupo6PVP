@@ -463,7 +463,7 @@ def _loop_batalla(datos, hp_max, contexto, obtener_tecla_fn, etiqueta="ENEMIGO",
                         _renderizar(datos, hp_enemigo, contexto, cursor,
                                     "¡Escapaste!", "menu", 0, escudo_roto, etiqueta)
                         obtener_tecla_fn()
-                        return False
+                        return None
                     else:
                         mensaje = "No pudiste escapar..."
                         msg_mob, escudo_roto = _turno_mob(datos, inventario, escudo_roto, personaje, tipo)
@@ -528,14 +528,14 @@ def iniciar_batalla(enemigo_dict, mapa, contexto, obtener_tecla_fn):
     datos    = STATS_ENEMIGOS[tipo_mob]
     hp_max   = datos["hp_max"]
 
-    gano = _loop_batalla(datos, hp_max, contexto, obtener_tecla_fn, tipo=tipo_mob)
+    resultado = _loop_batalla(datos, hp_max, contexto, obtener_tecla_fn, tipo=tipo_mob)
 
-    if gano:
+    if resultado:
         eliminar_enemigo(enemigo_dict, mapa, contexto)
-    else:
+    elif resultado is False:
         _manejar_derrota(contexto, mapa)
 
-    return gano
+    return resultado
 
 
 # ─── Entrada pública: pelea en coliseo (rivales) ─────────────────────────────
@@ -566,8 +566,10 @@ def iniciar_coliseo(mapa, contexto, obtener_tecla_fn):
         gano = _loop_batalla(datos_rival, datos_rival["hp_max"],
                              contexto, obtener_tecla_fn, etiqueta)
 
-        if not gano:
+        if gano is False:
             _manejar_derrota(contexto, mapa)
+            return False
+        if gano is None:
             return False
 
     _pantalla_victoria_coliseo(obtener_tecla_fn)
