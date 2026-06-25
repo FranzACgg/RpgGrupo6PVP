@@ -6,7 +6,6 @@ from config import (
     MAPA_REAL_ANCHO,
     simbolos_entorno,
     simbolos_pasto,
-    simbolos_especiales,
 )
 from estructuras import (
     generar_cueva,
@@ -66,10 +65,7 @@ def generar_mapa_prado():
     # 4. Caminos centrales con entradas
     generar_caminos_principales(mapa)
 
-    # 5. Posición inicial del jugador
-    mapa[1][52] = simbolos_especiales[0]  # P
-
-    # 6. Estructuras
+    # 5. Estructuras
     generar_cueva(mapa, 10, 10, 6, 4)
     generar_casa_destruida(mapa, 11, 90, 15, 10)
     generar_lago(mapa, 60, 20, 15, 20)

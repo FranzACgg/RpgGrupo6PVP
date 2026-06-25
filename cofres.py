@@ -24,7 +24,7 @@ ITEMS_TUMBA = [
     {"id_item": 35, "nombre": "Corona Rota",             "tipo": "equipable",  "cantidad": 1, "equipado": False},
 ]
 
-# ─── Loot de cofres normales (mezcla bueno/malo de items_mapa) ────────────────
+# ─── Loot de cofres normales (item aleatorio del catálogo) ──────────────
 
 def _loot_cofre_aleatorio():
     """Devuelve un item aleatorio del catálogo."""
@@ -34,6 +34,12 @@ def _loot_cofre_aleatorio():
 # ─── Abrir cofre ─────────────────────────────────────────────────────────────
 
 def _obtener_tecla():
+    """
+    Objetivo: leer una tecla del teclado sin eco en la consola (bloquea hasta
+        que el usuario presiona una tecla)
+    Salida: String con el caracter en minuscula, o cadena vacia si el byte
+        no es decodificable como UTF-8
+    """
     return msvcrt.getch().decode("utf-8", errors="ignore").lower()
 
 
@@ -80,8 +86,17 @@ SIMBOLO_TUMBA_EXCAVABLE = "✦"   # tumba especial marcada en el mapa
 
 
 def tiene_pala(inventario):
-    """Comprueba si el jugador tiene la Pala Sagrada en el inventario."""
-    return any(it["id_item"] == 50 for it in inventario)
+    """
+    Entrada: Lista
+    Params:
+        inventario: Lista con todos los items en el inventario
+    Objetivo: comprobar si el jugador tiene la Pala Sagrada (id 50)
+    Salida: True si la tiene, False si no
+    """
+    for it in inventario:
+        if it["id_item"] == 50:
+            return True
+    return False
 
 
 def excavar_tumba(inventario, mapa, pos_tumba):

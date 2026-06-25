@@ -51,12 +51,13 @@ def _sembrar_tumbas_y_arboles(mapa):
         for c in range(4, MAPA_REAL_ANCHO - 4):
             if mapa[f][c] not in simbolos_pasto:
                 continue
-            hay_camino = any(
-                mapa[f + df][c + dc] == "▒"
-                for df in range(-2, 3)
-                for dc in range(-2, 3)
-                if 0 <= f + df < MAPA_REAL_ALTO and 0 <= c + dc < MAPA_REAL_ANCHO
-            )
+            hay_camino = False
+            for df in range(-2, 3):
+                for dc in range(-2, 3):
+                    nf, nc = f + df, c + dc
+                    if 0 <= nf < MAPA_REAL_ALTO and 0 <= nc < MAPA_REAL_ANCHO:
+                        if mapa[nf][nc] == "▒":
+                            hay_camino = True
             if hay_camino:
                 prob = random.random()
                 if   prob < 0.15: mapa[f][c] = "🪦"

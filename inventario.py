@@ -4,6 +4,8 @@ from rich.console import Console
 from rich.panel import Panel
 from rich.align import Align
 
+from config import CATALOGO_ITEMS, aplicar_efecto_consumible
+
 INVENTARIO_MAXIMO = 30
 ITEM_KEYS_VALUES = {
     "id_item": 0,
@@ -13,10 +15,10 @@ ITEM_KEYS_VALUES = {
     "equipado": False,
 }
 
+TIPOS = {"consumible", "equipable", "clave"}
+
 # cuantos items mostrar por pagina
 ITEMS_POR_PAGINA = 8
-
-TIPOS = {"consumible", "equipable", "clave"}
 
 console = Console()  # Consola rich
 
@@ -38,30 +40,30 @@ def agregar_item(item, inventario):
     Params:
         item: Diccionario con el item a agregar al inventario
         inventario: Lista con todos los items en el inventario
-    Objetivo: Agregar item al inventario
-    Salida: True si agrega item al inventario, False si esta lleno.
+    Objetivo: Agregar item al inventario, validando que sea un item valido
+    Salida: True si lo agrega, False si el inventario esta lleno. Lanza
+        ValueError si el item tiene keys de mas, le faltan keys o el tipo
+        no existe. Modifica el inventario original que toma la funcion
     """
     mensaje = ""
     if item.keys() != ITEM_KEYS_VALUES.keys():
         if item.keys() - ITEM_KEYS_VALUES.keys():
             mensaje += f"{item.keys() - ITEM_KEYS_VALUES.keys()} no son keys de items\n"
         if ITEM_KEYS_VALUES.keys() - item.keys():
-            mensaje += (
-                f"Faltan las keys: {ITEM_KEYS_VALUES.keys() - item.keys()} \n"
-            )
+            mensaje += f"Faltan las keys: {ITEM_KEYS_VALUES.keys() - item.keys()} \n"
     if "tipo" in item and item["tipo"] not in TIPOS:
         mensaje += f"El tipo de item {item['tipo']} no existe en el juego\n"
     if mensaje:
         raise ValueError(mensaje)
+
     i = busqueda_item_por_id(item["id_item"], inventario)
     if i != -1:
         inventario[i]["cantidad"] += 1
         return True
-    else:
-        if len(inventario) >= INVENTARIO_MAXIMO:
-            return False
-        inventario.append(item.copy())
-        return True
+    if len(inventario) >= INVENTARIO_MAXIMO:
+        return False
+    inventario.append(item.copy())
+    return True
 
 
 def busqueda_item_por_id(id_item, inventario):
@@ -82,28 +84,40 @@ def busqueda_item_por_id(id_item, inventario):
         return -1
 
 
-def usar_item(id_item, inventario):
+def usar_item(id_item, inventario, personaje=None):
     """
-    Entrada: Entero, Lista
+    Entrada: Entero, Lista, Diccionario (opcional)
     Params:
         id_item: Id del item a usar
         inventario: Lista con todos los items en el inventario
+        personaje: dict del personaje. Si se pasa, se le aplica el efecto
+            real del consumible (HP/MP/especial) usando la misma lógica
+            que en combate. Si no se pasa, solo se descuenta el item
+            (comportamiento antiguo, usado por tests/standalone).
     Objetivo: Manejar el uso de items
-    Salida: Diccionario del item que se uso o none si hubo un error. Modifica el inventario original que toma la funcion
+    Salida: tupla (diccionario del item usado o None, descripción del
+        efecto aplicado o None). Modifica el inventario y, si corresponde,
+        el personaje, que toma la función por parámetro.
     """
     i = busqueda_item_por_id(id_item, inventario)
     if i == -1:
-        return None
+        return None, None
     item = inventario[i]
     if item["tipo"] != "consumible":
-        return None
+        return None, None
     if item["cantidad"] <= 0:
-        return None
-    elif item["cantidad"] == 1:
+        return None, None
+
+    resultado = None
+    if personaje is not None:
+        resultado = aplicar_efecto_consumible(item, personaje)
+
+    item_info = item.copy()
+    if item["cantidad"] == 1:
         inventario.pop(i)
     else:
         item["cantidad"] -= 1
-    return item
+    return item_info, resultado
 
 
 def manejar_equipado_item(id_item, inventario):
@@ -217,6 +231,9 @@ def construir_cadenas_inventario(inventario, cursor, desvio_cursor):
             cantidad = f'x{inventario[i]["cantidad"]}'
             equipado = ' [bold cyan]\\[E][/]' if inventario[i]["equipado"] else '' # 
 
+            info = CATALOGO_ITEMS.get(inventario[i]["id_item"], {})
+            descripcion = info.get("descripcion", "")
+
             if i == cursor:
                 cadenas.append(
                     f"[bold white]{selector}{nombre:<26} {cantidad:>4}{equipado}[/]"
@@ -225,6 +242,8 @@ def construir_cadenas_inventario(inventario, cursor, desvio_cursor):
                 cadenas.append(
                     f"[dim]{selector}{nombre:<26} {cantidad:>4}{equipado}[/]"
                 )
+            if descripcion:
+                cadenas.append(f"[dim italic]    {descripcion}[/]")
 
         if desvio_cursor > 0:
             cadenas.append("[dim]  ▲ más arriba[/]")
@@ -256,6 +275,10 @@ def construir_detalle(inventario, cursor):
             else "[dim]No equipado[/]"
         )
         detalle += f"\n[dim]Estado:[/] {estado}"
+    info = CATALOGO_ITEMS.get(item["id_item"], {})
+    descripcion = info.get("descripcion", "")
+    if descripcion:
+        detalle += f"\n[dim italic]{descripcion}[/]"
     return detalle
 
 
@@ -338,11 +361,13 @@ def renderizar_inventario(inventario, cursor, desvio_cursor, mensaje=""):
     )
 
 
-def manejar_inventario(inventario):
+def manejar_inventario(inventario, personaje=None):
     """
-    Entrada: Lista
+    Entrada: Lista, Diccionario (opcional)
     Params:
         inventario: Lista con todos los items en el inventario
+        personaje: dict del personaje. Si se pasa, usar un consumible
+            aplica realmente su efecto (HP/MP) sobre sus stats.
     Objetivo: Maneja y coordina todas las operaciones del inventario
     Salida: none
     """
@@ -367,9 +392,12 @@ def manejar_inventario(inventario):
                 if cursor != len(inventario) - 1:
                     cursor += 1
             elif tecla == "u":
-                item = usar_item(id_item, inventario)
+                item, resultado = usar_item(id_item, inventario, personaje)
                 if item:
-                    mensaje = f"Usaste {item['nombre']}"
+                    if resultado:
+                        mensaje = f"Usaste {item['nombre']}: {resultado}."
+                    else:
+                        mensaje = f"Usaste {item['nombre']}"
                 if len(inventario) < largo_original and cursor != 0:
                     cursor -= 1
             elif tecla == "e":

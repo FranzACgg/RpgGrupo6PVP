@@ -86,9 +86,7 @@ def _generar_calles(mapa, posiciones_aldeanos):
     mapa[fc][cc] = "C"
     _COFRES_MERCADO.append([fc, cc])
 
-    # Posición inicial del jugador
-    c_centro = MAPA_REAL_ANCHO // 2
-    mapa[1][c_centro] = "░"
+    # La posición inicial del jugador [1][c_centro] queda con el suelo base " "
 
 
 def generar_mapa_mercado_total():

@@ -1,5 +1,5 @@
 # pantalla_batalla.py — Sistema de combate por turnos (RPG)
-# ARQUITECTURA: recibe contexto como parámetro, no usa estado global.
+# Soporta: slimes, goblins, jefe estático, y RIVALES (personajes no elegidos)
 
 import os
 import random
@@ -9,13 +9,13 @@ from rich.panel   import Panel
 from rich.columns import Columns
 from rich.align   import Align
 
-from config import CAMARA_ALTO
+from config    import CAMARA_ALTO, CATALOGO_ITEMS, aplicar_efecto_consumible
 from entidades import STATS_ENEMIGOS, eliminar_enemigo
+from estados import VICTORIA, GAME_OVER
 
 console = Console()
 
 # ─── ASCII art ───────────────────────────────────────────────────────────────
-
 ASCII_SLIME = r"""
       .-~~~~-.
      /  o  o  \
@@ -24,7 +24,6 @@ ASCII_SLIME = r"""
       `------'
         (ζ)
 """
-
 ASCII_GOBLIN = r"""
       _____
    <=( +.+ )=>
@@ -32,14 +31,35 @@ ASCII_GOBLIN = r"""
      /|   |\
     o L   L o
 """
-
+ASCII_GUERRERO = r"""
+    ___/\___
+   |  O  O |
+   | \___/ |
+   |_______|
+    |  |  |
+   [GUERRERO]
+"""
+ASCII_PIRATA = r"""
+    _  _
+   ( \/ )
+   /|  |\
+  / |  | \
+ /__|  |__\
+  [PIRATA]
+"""
+ASCII_BUFON = r"""
+   /\_/\
+  ( ^.^ )
+  /|   |\
+ /_|   |_\
+  [BUFON]
+"""
 ASCII_DEFAULT = r"""
       ?????
      (     )
       \   /
        ---
 """
-
 ASCII_JEFE = r"""
   /\___/\
  (  >.<  )
@@ -47,29 +67,20 @@ ASCII_JEFE = r"""
  (________)
   |  |  |
 """
-_ARTE = {"slime": ASCII_SLIME, "goblin": ASCII_GOBLIN, "jefe": ASCII_JEFE}
-
-# ─── Catálogo de items (bonus_stats y efecto) ─────────────────────────────────
-CATALOGO_ITEMS = {
-    1:  {"tipo": "consumible", "efecto": {"hp": 50}},
-    2:  {"tipo": "consumible", "efecto": {"hp": 30}},
-    3:  {"tipo": "consumible", "efecto": {"hp": 100}},
-    4:  {"tipo": "equipable",  "bonus_stats": {"hp": 30}},
-    5:  {"tipo": "equipable",  "bonus_stats": {"fuerza": 25}},
-    6:  {"tipo": "equipable",  "bonus_stats": {"fuerza": 15, "agilidad": 10}},
-    7:  {"tipo": "equipable",  "bonus_stats": {"defensa": 30}},
-    8:  {"tipo": "equipable",  "bonus_stats": {"defensa": 15, "hp": 20}},
-    9:  {"tipo": "equipable",  "bonus_stats": {"defensa": 40, "hp": 50}},
-    10: {"tipo": "consumible", "efecto": {"mp": -30, "hp": -20}},
-    11: {"tipo": "consumible", "efecto": {"fuerza": 30}},
-    12: {"tipo": "consumible", "efecto": {"defensa": -50}},
-    13: {"tipo": "equipable",  "bonus_stats": {"defensa": -10}},
-    14: {"tipo": "equipable",  "bonus_stats": {"fuerza": 35, "hp": -30}},
-    15: {"tipo": "equipable",  "bonus_stats": {"fuerza": 50, "defensa": -20}},
-    16: {"tipo": "equipable",  "bonus_stats": {"agilidad": -15}},
-    17: {"tipo": "equipable",  "bonus_stats": {"fuerza": -20}},
-    18: {"tipo": "equipable",  "bonus_stats": {"defensa": 20, "suerte": 15}},
+_ARTE = {
+    "slime":   ASCII_SLIME,
+    "ζ":       ASCII_SLIME,    # símbolo real del slime en el mapa
+    "goblin":  ASCII_GOBLIN,
+    "G":       ASCII_GOBLIN,   # símbolo real del goblin en el mapa
+    "jefe":    ASCII_JEFE,
+    "J":       ASCII_JEFE,     # símbolo real del jefe en el mapa
+    "Guerrero": ASCII_GUERRERO,
+    "Pirata":   ASCII_PIRATA,
+    "Bufon":    ASCII_BUFON,
 }
+
+# ─── Catálogo de items: ahora vive en config.py (CATALOGO_ITEMS) ────────────
+# para que el inventario fuera de combate y la batalla usen la misma data.
 
 # ─── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -79,22 +90,17 @@ def _barra(actual, maximo, largo=12):
 
 
 def _tipo_texto(tipo):
-    return {"Ataque": "⚔  Ataque", "Maldición": "💀 Maldición",
-            "Maldicion": "💀 Maldición", "Defensa": "🛡  Defensa",
-            "Mejora": "✨ Mejora", "fisico": "⚔  Físico",
+    return {"Ataque": "⚔ Ataque", "Maldición": "💀 Maldición",
+            "Maldicion": "💀 Maldición", "Defensa": "🛡 Defensa",
+            "Mejora": "✨ Mejora", "fisico": "⚔ Físico",
             "magico": "✨ Mágico"}.get(tipo, tipo)
 
 
 def _stats_con_items(personaje, inventario, escudo_roto=False):
-    """
-    Devuelve (stats_totales, bonus_dict).
-    stats_totales = stats_base + bonus de items equipados (escudo ignorado si roto).
-    """
     from personajes import CLASES_DISPONIBLES
-    base  = CLASES_DISPONIBLES.get(personaje["clase"], {}).get("stats_base", {}).copy()
-    for s in ("fuerza", "defensa", "agilidad", "suerte", "magia", "espiritu"):
+    base = CLASES_DISPONIBLES.get(personaje["clase"], {}).get("stats_base", {}).copy()
+    for s in ("fuerza", "defensa", "agilidad", "suerte"):
         base.setdefault(s, 0)
-
     bonus = {s: 0 for s in base}
     for it in inventario:
         if not it.get("equipado"):
@@ -105,7 +111,6 @@ def _stats_con_items(personaje, inventario, escudo_roto=False):
             if stat == "defensa" and escudo_roto:
                 continue
             bonus[stat] = bonus.get(stat, 0) + val
-
     totales = {k: max(0, base[k] + bonus[k]) for k in base}
     return totales, bonus
 
@@ -113,12 +118,46 @@ def _stats_con_items(personaje, inventario, escudo_roto=False):
 def _esquivar(agilidad):
     return random.randint(1, 100) <= max(5, min(50, agilidad))
 
+
+def _danio_recibido(ataque, defensa):
+    # la defensa resta, pero siempre pasa al menos el 25% del ataque
+    return max(round(ataque * 0.25), ataque - defensa)
+
+
+def _datos_rival(rival_seleccion):
+    """Construye un dict estilo STATS_ENEMIGOS a partir de un personaje rival."""
+    from personajes import CLASES_DISPONIBLES, crear_personaje
+    clase  = rival_seleccion["clase"]
+    datos_clase = CLASES_DISPONIBLES[clase]
+    sb     = datos_clase["stats_base"]
+    # Los rivales del coliseo tienen mucha más vida que un jugador normal
+    # (x3) para que las peleas sean largas, pero su daño se mantiene
+    # moderado (mismas fuerza/defensa base — ver fix de _turno_mob).
+    return {
+        "nombre":    rival_seleccion["nombre"],
+        "simbolo":   clase,
+        "hp_max":    sb["hp"] * 3,
+        "fuerza":    sb["fuerza"],
+        "defensa":   sb["defensa"],
+        "agilidad":  sb["agilidad"],
+        "habilidades": [
+            {
+                "nombre":       h["nombre"],
+                "tipo":         h["tipo"],
+                "valor":        h["valor"],
+                "probabilidad": h["probabilidad"],
+            }
+            for h in datos_clase["habilidades"]
+        ],
+    }
+
 # ─── Paneles ─────────────────────────────────────────────────────────────────
 
-def _panel_enemigo(tipo_mob, hp_actual):
-    datos  = STATS_ENEMIGOS[tipo_mob]
+def _panel_enemigo(datos, hp_actual, etiqueta="ENEMIGO"):
     hp_max = datos["hp_max"]
-    arte   = _ARTE.get(tipo_mob, ASCII_DEFAULT)
+    simbolo = datos["simbolo"]
+    # Buscar arte por símbolo; si no existe, intentar por nombre de clase (rivales)
+    arte = _ARTE.get(simbolo) or _ARTE.get(datos.get("nombre", ""), ASCII_DEFAULT)
     barra  = _barra(hp_actual, hp_max)
     stats  = f"FUE:{datos['fuerza']}  DEF:{datos['defensa']}  AGI:{datos['agilidad']}%"
     contenido = (
@@ -127,15 +166,15 @@ def _panel_enemigo(tipo_mob, hp_actual):
         f"[red]HP  {barra}  {hp_actual}/{hp_max}[/]\n"
         f"[dim]{stats}[/]"
     )
-    return Panel(contenido, title=f"[bold green]ENEMIGO — {datos['nombre']}[/]",
+    return Panel(contenido, title=f"[bold green]{etiqueta} — {datos['nombre']}[/]",
                  border_style="green", expand=True, padding=(1, 4))
 
 
 def _panel_personaje(personaje, inventario, escudo_roto=False):
-    hp     = personaje["stats_actuales"]["hp"]
-    hp_max = personaje["stats_base"]["hp"]
-    mp     = personaje["stats_actuales"]["mp"]
-    mp_max = personaje["stats_base"]["mp"]
+    hp      = personaje["stats_actuales"]["hp"]
+    hp_max  = personaje["stats_base"]["hp"]
+    mp      = personaje["stats_actuales"]["mp"]
+    mp_max  = personaje["stats_base"]["mp"]
     totales, bonus = _stats_con_items(personaje, inventario, escudo_roto)
 
     def sl(etiqueta, key):
@@ -155,21 +194,19 @@ def _panel_personaje(personaje, inventario, escudo_roto=False):
         "",
         sl("Fuerza",   "fuerza")  + "   " + sl("Defensa",  "defensa"),
         sl("Agilidad", "agilidad") + "   " + sl("Suerte",   "suerte"),
-        sl("Magia",    "magia")   + "   " + sl("Espíritu", "espiritu"),
     ]
     if escudo_roto:
         lineas.append("\n[bold red]⚠ Escudo roto![/]")
-
     return Panel("\n".join(lineas), title="[bold green]PERSONAJE[/]",
                  border_style="green", expand=True, padding=(1, 2))
 
 
 def _panel_acciones(cursor):
     ops = [("1","Luchar"), ("2","Habilidades"), ("3","Ítems"), ("4","Escapar")]
-    lineas = []
-    for i, (t, txt) in enumerate(ops):
-        lineas.append(f"[bold green]▶ [{t}] {txt}[/]" if i == cursor
-                      else f"[dim]  [{t}] {txt}[/]")
+    lineas = [
+        f"[bold green]▶ [{t}] {txt}[/]" if i == cursor else f"[dim]  [{t}] {txt}[/]"
+        for i, (t, txt) in enumerate(ops)
+    ]
     return Panel("\n".join(lineas), title="[bold green]ACCIONES[/]",
                  border_style="green", expand=True, padding=(1, 2))
 
@@ -197,10 +234,8 @@ def _panel_items(inventario, cursor_sec):
     for i, it in enumerate(consumibles):
         marca = "▶ " if i == cursor_sec else "  "
         info  = CATALOGO_ITEMS.get(it["id_item"], {})
-        efecto_str = ", ".join(
-            f"{k}{'+'if v>0 else ''}{v}" for k, v in info.get("efecto", {}).items()
-        )
-        lineas.append(f"[white]{marca}{it['nombre']} x{it['cantidad']}[/] [dim]{efecto_str}[/]")
+        efecto_str = info.get("descripcion", "Sin descripción.")
+        lineas.append(f"[white]{marca}{it['nombre']} x{it['cantidad']}[/]\n[dim]      {efecto_str}[/]")
     return Panel("\n".join(lineas), title="[bold green]ÍTEMS[/]",
                  border_style="yellow", expand=True, padding=(1, 2))
 
@@ -209,14 +244,14 @@ def _panel_log(mensaje):
     return Panel(f"[bold yellow]{mensaje}[/]" if mensaje else "[dim]...[/]",
                  border_style="green", expand=True, padding=(0, 2))
 
-# ─── Render principal ────────────────────────────────────────────────────────
+# ─── Render ───────────────────────────────────────────────────────────────────
 
-def _renderizar(tipo_mob, hp_enemigo, contexto, cursor, mensaje,
-                modo, cursor_sec, escudo_roto):
+def _renderizar(datos_en, hp_enemigo, contexto, cursor, mensaje,
+                modo, cursor_sec, escudo_roto, etiqueta="ENEMIGO"):
     os.system('cls' if os.name == 'nt' else 'clear')
     personaje  = contexto["personaje"]
     inventario = contexto["inventario"]
-    console.print(Align(_panel_enemigo(tipo_mob, hp_enemigo), align="center"))
+    console.print(Align(_panel_enemigo(datos_en, hp_enemigo, etiqueta), align="center"))
     if modo == "habilidades":
         panel_der = _panel_habilidades(personaje, cursor_sec)
     elif modo == "items":
@@ -231,18 +266,12 @@ def _renderizar(tipo_mob, hp_enemigo, contexto, cursor, mensaje,
 
 # ─── Turno del mob ────────────────────────────────────────────────────────────
 
-def _turno_mob(tipo_mob, inventario, escudo_roto, personaje):
-    """
-    Ejecuta el ataque del mob. Devuelve (mensaje, nuevo_escudo_roto).
-    Lee hp del personaje desde stats_actuales y lo actualiza ahí.
-    """
-    datos   = STATS_ENEMIGOS[tipo_mob]
+def _turno_mob(datos, inventario, escudo_roto, personaje):
     totales, bonus = _stats_con_items(personaje, inventario, escudo_roto)
     defensa = totales.get("defensa", 0)
     agi_p   = totales.get("agilidad", 0)
     msgs    = []
 
-    # ¿habilidad especial?
     hab_usada = None
     for hab in datos["habilidades"]:
         if random.randint(1, 100) <= hab["probabilidad"]:
@@ -253,8 +282,10 @@ def _turno_mob(tipo_mob, inventario, escudo_roto, personaje):
     if hab_usada:
         msgs.append(f"[magenta]{datos['nombre']} usa {hab_usada['nombre']} ({_tipo_texto(hab_usada['tipo'])})![/]")
 
-        if hab_usada["nombre"] == "Disparo Ácido":
-            dano = max(1, int(datos["fuerza"] * 2) - defensa)
+        nombre_hab = hab_usada["nombre"]
+
+        if nombre_hab == "Disparo Ácido":
+            dano = _danio_recibido(datos["fuerza"] * 2, defensa)
             if _esquivar(agi_p):
                 msgs.append("[cyan]¡Esquivaste el Disparo Ácido![/]")
             else:
@@ -262,7 +293,7 @@ def _turno_mob(tipo_mob, inventario, escudo_roto, personaje):
                 msgs.append(f"[red]Recibiste {dano} de daño ácido![/]")
             return " | ".join(msgs), escudo_roto
 
-        elif hab_usada["nombre"] == "Cuerpo Ácido":
+        elif nombre_hab == "Cuerpo Ácido":
             eq = [it for it in inventario if it.get("equipado") and it["tipo"] == "equipable"]
             if eq:
                 destruida = random.choice(eq)
@@ -272,17 +303,17 @@ def _turno_mob(tipo_mob, inventario, escudo_roto, personaje):
                 msgs.append("[dim]Sin arma equipada, el ácido no hace nada.[/]")
             return " | ".join(msgs), escudo_roto
 
-        elif hab_usada["nombre"] == "Daga Rompe Escudos":
+        elif nombre_hab == "Daga Rompe Escudos":
             msgs.append("[bold red]¡Tu escudo fue anulado![/]")
-            return " | ".join(msgs), True   # escudo_roto = True
+            return " | ".join(msgs), True
 
-        elif hab_usada["nombre"] == "Modo Berserker":
+        elif nombre_hab in ("Modo Berserker", "Torbellino"):
             tirada = random.randint(1, 100)
             golpes = 3 if tirada <= 20 else 2
-            msgs.append(f"[bold red]¡Modo Berserker! Ataca {golpes} veces![/]")
+            msgs.append(f"[bold red]¡{nombre_hab}! Ataca {golpes} veces![/]")
 
-        elif hab_usada["nombre"] == "Golpe Devastador":
-            dano = max(1, int(datos["fuerza"] * 2) - defensa)
+        elif nombre_hab == "Golpe Devastador":
+            dano = _danio_recibido(datos["fuerza"] * 2, defensa)
             if _esquivar(agi_p):
                 msgs.append("[cyan]¡Esquivaste el Golpe Devastador![/]")
             else:
@@ -290,16 +321,24 @@ def _turno_mob(tipo_mob, inventario, escudo_roto, personaje):
                 msgs.append(f"[red]¡Golpe Devastador! Recibiste {dano} de daño![/]")
             return " | ".join(msgs), escudo_roto
 
-        elif hab_usada["nombre"] == "Torbellino":
-            golpes = 3
-            msgs.append("[bold red]¡Torbellino! El Campeón ataca 3 veces![/]")
-
-        elif hab_usada["nombre"] == "Grito de Arena":
+        elif nombre_hab == "Grito de Arena":
             msgs.append("[bold red]¡Grito de Arena! Tu escudo fue destrozado![/]")
             return " | ".join(msgs), True
 
+        # Habilidades de rivales — actúan con valor adicional (sumado a la
+        # fuerza base, igual que cuando el jugador usa sus propias habilidades).
+        # Antes se multiplicaba (fuerza * valor), lo que generaba daño absurdo.
+        else:
+            dano_extra = _danio_recibido(datos["fuerza"] + int(hab_usada.get("valor", 0)), defensa)
+            if _esquivar(agi_p):
+                msgs.append(f"[cyan]¡Esquivaste {nombre_hab}![/]")
+            else:
+                personaje["stats_actuales"]["hp"] = max(0, personaje["stats_actuales"]["hp"] - dano_extra)
+                msgs.append(f"[red]{nombre_hab}: recibiste {dano_extra} de daño![/]")
+            return " | ".join(msgs), escudo_roto
+
     for _ in range(golpes):
-        dano = max(1, datos["fuerza"] - defensa)
+        dano = _danio_recibido(datos["fuerza"], defensa)
         if _esquivar(agi_p):
             msgs.append("[cyan]¡Esquivaste el ataque![/]")
         else:
@@ -308,37 +347,28 @@ def _turno_mob(tipo_mob, inventario, escudo_roto, personaje):
 
     return " | ".join(msgs), escudo_roto
 
-# ─── Loop principal ──────────────────────────────────────────────────────────
+# ─── Loop de batalla (genérico) ───────────────────────────────────────────────
 
-def iniciar_batalla(enemigo_dict, mapa, contexto, obtener_tecla_fn):
+def _loop_batalla(datos, hp_max, contexto, obtener_tecla_fn, etiqueta="ENEMIGO"):
     """
-    Parámetros:
-        enemigo_dict  : entrada de contexto["mundo"]["enemigos"]
-        mapa          : mapa actual (para eliminar el sprite al morir)
-        contexto      : contexto completo del juego
-        obtener_tecla_fn : función de lectura de teclado
-
-    Devuelve True si el jugador ganó, False si escapó o murió.
+    Loop de combate reutilizable para cualquier tipo de enemigo.
+    Devuelve True si el jugador ganó, False si murió/escapó.
     """
-    personaje   = contexto["personaje"]
-    inventario  = contexto["inventario"]
-    tipo_mob    = enemigo_dict["tipo"]
-    datos       = STATS_ENEMIGOS[tipo_mob]
-    hp_enemigo  = enemigo_dict["hp_actual"]   # FIX: usa hp_actual del dict, que es hp_max al inicio
-    hp_max_en   = datos["hp_max"]
-    cursor      = 0
-    mensaje     = f"¡Un {datos['nombre']} aparece!"
+    personaje  = contexto["personaje"]
+    inventario = contexto["inventario"]
+    hp_enemigo = hp_max
+    cursor     = 0
+    mensaje    = f"¡{datos['nombre']} aparece!"
     escudo_roto = False
-    modo        = "menu"
-    cursor_sec  = 0
+    modo       = "menu"
+    cursor_sec = 0
 
     while True:
-        _renderizar(tipo_mob, hp_enemigo, contexto, cursor,
-                    mensaje, modo, cursor_sec, escudo_roto)
+        _renderizar(datos, hp_enemigo, contexto, cursor,
+                    mensaje, modo, cursor_sec, escudo_roto, etiqueta)
         mensaje = ""
         t = obtener_tecla_fn()
 
-        # ── Menú habilidades ──────────────────────────────────────────────────
         if modo == "habilidades":
             habs = personaje.get("habilidades", [])
             if t == 'w':
@@ -355,21 +385,20 @@ def iniciar_batalla(enemigo_dict, mapa, contexto, obtener_tecla_fn):
                         totales, _ = _stats_con_items(personaje, inventario, escudo_roto)
                         exito = random.randint(1, 100) <= hab["probabilidad"]
                         if exito:
-                            dano = max(1, totales.get("fuerza", 10) + hab.get("valor", 0))
+                            dano = max(1, totales.get("fuerza", 10) + int(hab.get("valor", 0)))
                             if _esquivar(datos["agilidad"]):
                                 mensaje = f"[cyan]{datos['nombre']} esquivó {hab['nombre']}![/]"
                             else:
-                                hp_enemigo -= int(dano)
-                                mensaje = f"[bold]{hab['nombre']}[/] ({_tipo_texto(hab['tipo'])}) → {int(dano)} daño."
+                                hp_enemigo -= dano
+                                mensaje = f"[bold]{hab['nombre']}[/] → {dano} daño."
                         else:
                             mensaje = f"{hab['nombre']} falló."
-                        msg_mob, escudo_roto = _turno_mob(tipo_mob, inventario, escudo_roto, personaje)
+                        msg_mob, escudo_roto = _turno_mob(datos, inventario, escudo_roto, personaje)
                         mensaje += " | " + msg_mob
                         modo = "menu"
             elif t in ('q', '\x1b'):
                 modo = "menu"
 
-        # ── Menú ítems ────────────────────────────────────────────────────────
         elif modo == "items":
             consumibles = [it for it in inventario if it["tipo"] == "consumible"]
             if t == 'w':
@@ -379,90 +408,212 @@ def iniciar_batalla(enemigo_dict, mapa, contexto, obtener_tecla_fn):
             elif t in ('\r', '\n', 'e', ' '):
                 if consumibles:
                     it   = consumibles[cursor_sec]
-                    info = CATALOGO_ITEMS.get(it["id_item"], {})
-                    partes = []
-                    for stat, val in info.get("efecto", {}).items():
-                        if stat == "hp":
-                            personaje["stats_actuales"]["hp"] = min(
-                                personaje["stats_base"]["hp"],
-                                personaje["stats_actuales"]["hp"] + val
-                            )
-                            partes.append(f"HP {'+'if val>0 else ''}{val}")
-                        elif stat == "mp":
-                            personaje["stats_actuales"]["mp"] = min(
-                                personaje["stats_base"]["mp"],
-                                personaje["stats_actuales"]["mp"] + val
-                            )
-                            partes.append(f"MP {'+'if val>0 else ''}{val}")
+
+                    resultado = aplicar_efecto_consumible(it, personaje)
+
                     it["cantidad"] -= 1
                     if it["cantidad"] <= 0:
                         inventario.remove(it)
                         cursor_sec = max(0, cursor_sec - 1)
-                    mensaje = f"Usaste {it['nombre']}: {', '.join(partes) or 'sin efecto'}."
+                    mensaje = f"Usaste {it['nombre']}: {resultado}."
                     modo = "menu"
             elif t in ('q', '\x1b'):
                 modo = "menu"
 
-        # ── Menú principal ────────────────────────────────────────────────────
         else:
             if t == 'w':
                 cursor = (cursor - 1) % 4
             elif t == 's':
                 cursor = (cursor + 1) % 4
-
             elif t in ('\r', '\n', '1', '2', '3', '4'):
                 accion = cursor if t in ('\r', '\n') else int(t) - 1
 
-                if accion == 0:   # LUCHAR
+                if accion == 0:
                     totales, _ = _stats_con_items(personaje, inventario, escudo_roto)
                     dano_j = max(1, totales.get("fuerza", 10))
-                    tipo_hab = "⚔  Ataque físico"
                     if _esquivar(datos["agilidad"]):
-                        mensaje = f"[cyan]{datos['nombre']} esquivó tu ataque ({tipo_hab})![/]"
+                        mensaje = f"[cyan]{datos['nombre']} esquivó tu ataque![/]"
                     else:
                         hp_enemigo -= dano_j
-                        mensaje = f"{tipo_hab}: hiciste {dano_j} daño."
-                    msg_mob, escudo_roto = _turno_mob(tipo_mob, inventario, escudo_roto, personaje)
+                        mensaje = f"⚔ Ataque físico: hiciste {dano_j} daño."
+                    msg_mob, escudo_roto = _turno_mob(datos, inventario, escudo_roto, personaje)
                     mensaje += " | " + msg_mob
 
-                elif accion == 1:   # HABILIDADES
+                elif accion == 1:
                     modo = "habilidades"
                     cursor_sec = 0
 
-                elif accion == 2:   # ÍTEMS
+                elif accion == 2:
                     modo = "items"
                     cursor_sec = 0
 
-                elif accion == 3:   # ESCAPAR
+                elif accion == 3:
                     totales, _ = _stats_con_items(personaje, inventario, escudo_roto)
                     prob = min(90, totales.get("agilidad", 20) + 10)
                     if random.randint(1, 100) <= prob:
-                        _renderizar(tipo_mob, hp_enemigo, contexto, cursor,
-                                    "¡Escapaste!", "menu", 0, escudo_roto)
+                        _renderizar(datos, hp_enemigo, contexto, cursor,
+                                    "¡Escapaste!", "menu", 0, escudo_roto, etiqueta)
                         obtener_tecla_fn()
                         return False
                     else:
                         mensaje = "No pudiste escapar..."
-                        msg_mob, escudo_roto = _turno_mob(tipo_mob, inventario, escudo_roto, personaje)
+                        msg_mob, escudo_roto = _turno_mob(datos, inventario, escudo_roto, personaje)
                         mensaje += " | " + msg_mob
 
-        # ── Verificar victoria / derrota ──────────────────────────────────────
         hp_enemigo = max(0, hp_enemigo)
 
         if hp_enemigo <= 0:
-            _renderizar(tipo_mob, 0, contexto, cursor,
-                        f"[bold green]¡Derrotaste al {datos['nombre']}! Presioná una tecla.[/]",
-                        "menu", 0, escudo_roto)
+            _renderizar(datos, 0, contexto, cursor,
+                        f"[bold green]¡Derrotaste a {datos['nombre']}! Presioná una tecla.[/]",
+                        "menu", 0, escudo_roto, etiqueta)
             obtener_tecla_fn()
-            # FIX: eliminar del mapa Y de la lista
-            eliminar_enemigo(enemigo_dict, mapa, contexto)
             return True
 
         if personaje["stats_actuales"]["hp"] <= 0:
-            from personajes import revivir
-            _renderizar(tipo_mob, hp_enemigo, contexto, cursor,
+            _renderizar(datos, hp_enemigo, contexto, cursor,
                         "[bold red]¡Fuiste derrotado! Presioná una tecla.[/]",
-                        "menu", 0, escudo_roto)
+                        "menu", 0, escudo_roto, etiqueta)
             obtener_tecla_fn()
-            revivir(personaje)
             return False
+
+
+# ─── Pantalla de Round ────────────────────────────────────────────────────────
+
+def _pantalla_round(numero, nombre_rival, obtener_tecla_fn):
+    os.system('cls' if os.name == 'nt' else 'clear')
+    console.print(Align(Panel(
+        f"\n[bold yellow]¡ROUND {numero}![/]\n\n"
+        f"[bold white]Tu próximo rival: {nombre_rival}[/]\n\n"
+        f"[dim]Presioná cualquier tecla para continuar...[/]\n",
+        title="[bold red]⚔  COLISEO[/]",
+        border_style="red", expand=False, padding=(2, 6)
+    ), align="center"))
+    obtener_tecla_fn()
+
+
+# ─── Pantalla de fin de coliseo ───────────────────────────────────────────────
+
+def _pantalla_victoria_coliseo(obtener_tecla_fn):
+    os.system('cls' if os.name == 'nt' else 'clear')
+    console.print(Align(Panel(
+        "\n[bold yellow]¡¡¡CAMPEÓN DEL COLISEO!!![/]\n\n"
+        "[white]Derrotaste a todos los rivales.\n"
+        "El coliseo te acclama.[/]\n\n"
+        "[dim]Presioná cualquier tecla...[/]\n",
+        title="[bold yellow]🏆 VICTORIA[/]",
+        border_style="yellow", expand=False, padding=(2, 6)
+    ), align="center"))
+    obtener_tecla_fn()
+
+
+# ─── Entrada pública: batalla normal (mobs) ───────────────────────────────────
+
+def iniciar_batalla(enemigo_dict, mapa, contexto, obtener_tecla_fn):
+    """Batalla estándar contra un mob del mapa. Devuelve True si ganó."""
+    tipo_mob = enemigo_dict["tipo"]
+    datos    = STATS_ENEMIGOS[tipo_mob]
+    hp_max   = datos["hp_max"]
+
+    gano = _loop_batalla(datos, hp_max, contexto, obtener_tecla_fn)
+
+    if gano:
+        eliminar_enemigo(enemigo_dict, mapa, contexto)
+    else:
+        _manejar_derrota(contexto, mapa)
+
+    return gano
+
+
+# ─── Entrada pública: pelea en coliseo (rivales) ─────────────────────────────
+
+def iniciar_coliseo(mapa, contexto, obtener_tecla_fn):
+    """
+    Pelea por rounds contra los personajes no elegidos.
+    Round 1 → rival[0], Round 2 → rival[1], etc.
+    Cada victoria muestra pantalla de round y restaura MP al jugador.
+    Devuelve True si completó todos los rounds.
+    """
+    rivales = contexto["progreso"].get("rivales_coliseo", [])
+    if not rivales:
+        return True
+
+    personaje = contexto["personaje"]
+
+    for i, rival_sel in enumerate(rivales):
+        datos_rival = _datos_rival(rival_sel)
+        numero_round = i + 1
+        etiqueta = f"RIVAL — ROUND {numero_round}"
+
+        _pantalla_round(numero_round, rival_sel["nombre"], obtener_tecla_fn)
+
+        # Restaurar MP entre rounds (no HP — mantiene presión)
+        personaje["stats_actuales"]["mp"] = personaje["stats_base"]["mp"]
+
+        gano = _loop_batalla(datos_rival, datos_rival["hp_max"],
+                             contexto, obtener_tecla_fn, etiqueta)
+
+        if not gano:
+            _manejar_derrota(contexto, mapa)
+            return False
+
+    _pantalla_victoria_coliseo(obtener_tecla_fn)
+    contexto["progreso"]["coliseo_completado"] = True
+    contexto["estado_actual"] = VICTORIA
+    return True
+
+
+# ─── Derrota y sistema de vidas ──────────────────────────────────────────────
+
+def _manejar_derrota(contexto, mapa):
+    """
+    Gestiona la muerte del jugador:
+    - Si tiene vidas (Amuleto de Resurrección): pierde 1 vida, va al cementerio,
+      cierra las puertas (solo queda salida al Coliseo).
+    - Si no tiene vidas: game over.
+    """
+    from personajes import revivir
+    personaje = contexto["personaje"]
+
+    if personaje["vidas"] > 0:
+        revivir(personaje)
+        _ir_al_cementerio_tras_muerte(contexto)
+    else:
+        contexto["estado_actual"] = GAME_OVER
+
+
+def _ir_al_cementerio_tras_muerte(contexto):
+    """Teletransporta al jugador al cementerio y bloquea las salidas."""
+    from mapa_cementerio import generar_mapa_cementerio
+    from entidades import inicializar_enemigos
+
+    mundo = contexto["mundo"]
+    mapa_cem = generar_mapa_cementerio()
+
+    # Bloquear la salida sur (→ Prado): reemplazar O por '+'
+    mapa_cem[86][73] = "+"   # cierra puerta sur
+
+    mundo["mapa_actual"]    = mapa_cem
+    mundo["numero_mapa"]    = 3
+    mundo["pos_p"]          = [80, 65]
+    mundo["simbolo_debajo"] = ";"
+    mundo["dim_alto"]       = 90
+    mundo["dim_ancho"]      = 130
+    mundo["enemigos"]       = []
+
+    # Marcar el contexto para que cambio_de_mapa sepa que las puertas están cerradas
+    contexto["progreso"]["cementerio_bloqueado"] = True
+
+    os.system('cls' if os.name == 'nt' else 'clear')
+    console.print(Align(Panel(
+        "\n[bold red]¡HAS CAÍDO EN BATALLA![/]\n\n"
+        "[white]El Amuleto de Resurrección te devuelve a la vida...\n"
+        "Pero despiertas en el Cementerio.\n\n"
+        "[bold yellow]Las puertas al Prado están cerradas.\n"
+        "Solo puedes ir al Coliseo.[/][/]\n\n"
+        f"[dim]Vidas restantes: {'♥ ' * contexto['personaje']['vidas']}[/]\n\n"
+        "[dim]Presioná cualquier tecla...[/]\n",
+        title="[bold red]💀 RESURRECIÓN[/]",
+        border_style="red", expand=False, padding=(2, 4)
+    ), align="center"))
+    import msvcrt
+    msvcrt.getch()

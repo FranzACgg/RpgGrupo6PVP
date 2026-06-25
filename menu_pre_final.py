@@ -1,12 +1,10 @@
 import os
 import msvcrt
+
 from persistencia import existe_partida_guardada
 
-# Definimos el ancho de banda visual para que el centrado sea prolijo en toda la interfaz
 ANCHO_UI = 80
 
-# Una funcion lambda cortita para limpiar la pantalla.
-# Se usa para borrar lo anterior y que el menu parezca una animacion al moverse
 limpiar = lambda: os.system("cls" if os.name == "nt" else "clear")
 
 
@@ -21,8 +19,6 @@ def mostrar_logo():
 
 
 def mostrar_salon_heroes():
-    # Usamos un diccionario anidado para mapear los stats y descripciones de los heroes
-    # Esta estructura de clave:valor es para organizar la "fichas" de personajes
     heroes = {
         "Ragnar": {
             "Clase": "Guerrero",
@@ -46,20 +42,17 @@ def mostrar_salon_heroes():
     print(f"{'--- SALÓN DE HÉROES ---':^80}")
     print("=" * ANCHO_UI)
 
-    # Recorremos el diccionario usando el metodo .items()
     for nombre, datos in heroes.items():
-        # CLASE 3: Formateo con f-strings para que los datos queden alineados
         print(
             f" {datos['Icono']} {nombre.upper():<10} | {datos['Clase']:<10} | {datos['Desc']}"
         )
 
     print("-" * ANCHO_UI)
     print(f"{'[Presioná cualquier tecla para volver al menú]':^80}")
-    msvcrt.getch()  # Pausamos el flujo hasta detectar un evento de teclado
+    msvcrt.getch()
 
 
 def mostrar_creditos():
-    # Lista simple con los integrantes del Grupo
     autores = [
         "Franz Acevedo",
         "Juan Colonia",
@@ -70,7 +63,6 @@ def mostrar_creditos():
     print(f"{'--- CREADORES DE GLASSTION ---':^80}")
     print("-" * ANCHO_UI)
     for nombre in autores:
-        # Centramos cada nombre dinamicamente
         print(f"{nombre:^80}")
     print("-" * ANCHO_UI)
     print(f"\n{'[Presioná cualquier tecla para volver]':^80}")
@@ -81,8 +73,8 @@ def confirmar_sobrescribir():
     limpiar()
     print(f"{'YA EXISTE UNA PARTIDA GUARDADA':^80}")
     print("-" * ANCHO_UI)
-    print(f"{'Si empezás una nueva, se borra la guardada.':^80}")
-    print(f"{'¿Continuar? [S/N]':^80}")
+    print(f"{'Si empezas una nueva, se borra la guardada.':^80}")
+    print(f"{'Continuar? [S/N]':^80}")
     tecla = msvcrt.getch().decode("utf-8").lower()
     return tecla == "s"
 
@@ -90,16 +82,14 @@ def confirmar_sobrescribir():
 def menu_principal():
     cursor = 0
     while True:
-        # Las opciones se arman cada vuelta: CONTINUAR solo aparece si hay save
         opciones = []
         if existe_partida_guardada():
             opciones.append("CONTINUAR")
         opciones.append("NUEVA PARTIDA")
-        opciones.append("SALÓN DE HÉROES")
-        opciones.append("CRÉDITOS")
+        opciones.append("SALON DE HEROES")
+        opciones.append("CREDITOS")
         opciones.append("SALIR")
 
-        # Si cambió la cantidad de opciones, evitamos que el cursor quede afuera
         if cursor >= len(opciones):
             cursor = len(opciones) - 1
 
@@ -128,9 +118,9 @@ def menu_principal():
                 if existe_partida_guardada() and not confirmar_sobrescribir():
                     continue
                 return "nueva"
-            elif seleccion == "SALÓN DE HÉROES":
+            elif seleccion == "SALON DE HEROES":
                 mostrar_salon_heroes()
-            elif seleccion == "CRÉDITOS":
+            elif seleccion == "CREDITOS":
                 mostrar_creditos()
             elif seleccion == "SALIR":
                 return "salir"

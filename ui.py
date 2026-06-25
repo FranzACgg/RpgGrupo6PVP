@@ -4,7 +4,6 @@ import os
 from rich.console import Console
 from rich.panel import Panel
 from rich.align import Align
-from persistencia import guardar_partida
 
 from config import (
     CAMARA_ALTO, CAMARA_ANCHO,
@@ -15,6 +14,7 @@ from inventario import manejar_inventario
 from mapa_cueva import CUEVA_ALTO, CUEVA_ANCHO
 from mapa_coliseo import COLISEO_ALTO, COLISEO_ANCHO
 from estados import SALIR
+from persistencia import guardar_partida
 
 
 
@@ -89,10 +89,7 @@ def pantalla_menu_en_juego(obtener_tecla_fn, contexto):
         opcion = obtener_tecla_fn()
 
         if opcion == TECLAS_ACCION[1]:  # i — inventario
-            manejar_inventario(contexto["inventario"])
-
-        elif opcion == "v":
-            en_menu = False
+            manejar_inventario(contexto["inventario"], contexto["personaje"])
 
         elif opcion == "g":  # g — guardar partida
             if guardar_partida(contexto):
@@ -101,6 +98,9 @@ def pantalla_menu_en_juego(obtener_tecla_fn, contexto):
                 print("\n  No se pudo guardar la partida.")
             print("  Presioná cualquier tecla para continuar...")
             obtener_tecla_fn()
+
+        elif opcion == "v":
+            en_menu = False
 
         elif opcion == TECLAS_ACCION[2]:  # q — salir
             contexto["estado_actual"] = SALIR

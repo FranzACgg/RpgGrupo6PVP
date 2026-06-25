@@ -142,36 +142,32 @@ def test_busqueda_item_por_id():
 
 
 def test_usar_item():
-    assert usar_item(1, []) is None
-    assert (
-        usar_item(
-            8,
-            [
-                {
-                    "id_item": 8,
-                    "nombre": "Lanza Maldita",
-                    "tipo": "equipable",
-                    "cantidad": 1,
-                    "equipado": False,
-                }
-            ],
-        )
-    ) is None
-    assert (
-        usar_item(
-            1,
-            [
-                {
-                    "id_item": 1,
-                    "nombre": "Pocion de HP pequeña",
-                    "tipo": "consumible",
-                    "cantidad": 0,
-                    "equipado": False,
-                }
-            ],
-        )
-    ) is None
+    assert usar_item(1, []) == (None, None)
     assert usar_item(
+        8,
+        [
+            {
+                "id_item": 8,
+                "nombre": "Lanza Maldita",
+                "tipo": "equipable",
+                "cantidad": 1,
+                "equipado": False,
+            }
+        ],
+    ) == (None, None)
+    assert usar_item(
+        1,
+        [
+            {
+                "id_item": 1,
+                "nombre": "Pocion de HP pequeña",
+                "tipo": "consumible",
+                "cantidad": 0,
+                "equipado": False,
+            }
+        ],
+    ) == (None, None)
+    item, resultado = usar_item(
         1,
         [
             {
@@ -182,31 +178,28 @@ def test_usar_item():
                 "equipado": False,
             }
         ],
-    ) == {
+    )
+    assert item == {
         "id_item": 1,
         "nombre": "Pocion de HP pequeña",
         "tipo": "consumible",
         "cantidad": 1,
         "equipado": False,
     }
-    assert usar_item(
-        1,
-        [
-            {
-                "id_item": 1,
-                "nombre": "Pocion de HP pequeña",
-                "tipo": "consumible",
-                "cantidad": 5,
-                "equipado": False,
-            }
-        ],
-    ) == {
-        "id_item": 1,
-        "nombre": "Pocion de HP pequeña",
-        "tipo": "consumible",
-        "cantidad": 4,
-        "equipado": False,
-    }
+    assert resultado is None
+
+    inv = [
+        {
+            "id_item": 1,
+            "nombre": "Pocion de HP pequeña",
+            "tipo": "consumible",
+            "cantidad": 5,
+            "equipado": False,
+        }
+    ]
+    item, resultado = usar_item(1, inv)
+    assert item["cantidad"] == 5
+    assert inv[0]["cantidad"] == 4
 
 
 def test_manejar_equipado_item():

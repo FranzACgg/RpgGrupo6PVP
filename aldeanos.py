@@ -24,11 +24,11 @@ ID_CABEZA_GOBLIN = 52
 
 # ─── Recompensas de quest ─────────────────────────────────────────────────────
 RECOMPENSA_SLIME = {
-    "id_item": 60, "nombre": "Elixir del Pantano",
+    "id_item": 60, "nombre": "Super Pocion de Curacion",
     "tipo": "consumible", "cantidad": 1, "equipado": False,
 }
 RECOMPENSA_GOBLIN = {
-    "id_item": 61, "nombre": "Amuleto del Nigromante",
+    "id_item": 61, "nombre": "Amuleto de la Fortuna",
     "tipo": "equipable", "cantidad": 1, "equipado": False,
 }
 
@@ -54,7 +54,7 @@ ALDEANOS_MERCADO = [
         ],
     },
 
-    # ── QUEST: pide 5 babas de slime ─────────────────────────────────────────
+    # ── QUEST: pide 5 babas de slime (repetible) ─────────────────────────────
     {
         "id": "aldea_slime",
         "nombre": "Brotus el Alquimista",
@@ -63,17 +63,16 @@ ALDEANOS_MERCADO = [
         "quest_completada": False,
         "dialogos_sin_items": [
             "¡Ah, un aventurero! Justo a tiempo.",
-            "Necesito 5 Babas de Slime para mi último experimento.",
+            "Por cada 5 Babas de Slime te doy una Super Pocion de Salud.",
             "Las conseguís matando slimes en el Prado.",
-            "Traémelas y te doy algo que vale la pena... creo.",
+            "Volvé cuando tengas 5. O 10. O las que sean.",
         ],
         "dialogo_con_items": [
-            "¡Tenés las babas! Excelente, son fresquitas.",
-            "Tomá, el Elixir del Pantano. No lo huelas directamente.",
+            "¡Tenés babas! Excelente.",
+            "Tomá tu/s poción/es. Volvé cuando tengas más.",
         ],
         "dialogo_ya_completada": [
-            "El experimento salió bien... más o menos.",
-            "Hay humo morado en el laboratorio pero es decorativo.",
+            "Siempre necesito más babas. Traé y te pago.",
         ],
     },
 
@@ -92,7 +91,7 @@ ALDEANOS_MERCADO = [
         ],
         "dialogo_con_items": [
             "Las cabezas... perfectas. Las usaré bien.",
-            "Toma el Amuleto del Nigromante. Te protegerá... hasta cierto punto.",
+            "Toma el Amuleto de la Fortuna. Tu suerte aumentará en 50 puntos.",
         ],
         "dialogo_ya_completada": [
             "El ritual está en marcha. No me molestes.",
@@ -280,18 +279,23 @@ def _interactuar_pala(aldeano, inventario):
 
 
 def _interactuar_slime(aldeano, inventario):
-    if aldeano["quest_completada"]:
-        _mostrar_lineas(aldeano["nombre"], aldeano["dialogo_ya_completada"])
-        return
+    """
+    Quest repetible: cada 5 Babas de Slime → 1 Super Pocion de Salud.
+    Nunca se marca como completada — Brotus siempre compra más.
+    """
     tiene = _contar_item(ID_BABA_SLIME, inventario)
     if tiene >= 5:
+        veces = tiene // 5           # cuántas pociones puede dar
+        babas_a_quitar = veces * 5
         _mostrar_lineas(aldeano["nombre"], aldeano["dialogo_con_items"])
-        _quitar_items(ID_BABA_SLIME, 5, inventario)
-        _dar_item(RECOMPENSA_SLIME.copy(), inventario)
-        aldeano["quest_completada"] = True
+        _quitar_items(ID_BABA_SLIME, babas_a_quitar, inventario)
+        for _ in range(veces):
+            _dar_item(RECOMPENSA_SLIME.copy(), inventario)
         _pantalla_item_recibido(
-            aldeano["nombre"], RECOMPENSA_SLIME["nombre"],
-            "Brotus lo mezcla en un vaso turbio y te lo entrega."
+            aldeano["nombre"],
+            f"{veces}x {RECOMPENSA_SLIME['nombre']}",
+            f"Brotus te entrega {veces} poción/es a cambio de {babas_a_quitar} babas.\n"
+            "Llena tu HP por completo y aumenta tu HP máximo en 50."
         )
     else:
         faltante = 5 - tiene
@@ -323,7 +327,7 @@ def _interactuar_goblin(aldeano, inventario):
         aldeano["quest_completada"] = True
         _pantalla_item_recibido(
             aldeano["nombre"], RECOMPENSA_GOBLIN["nombre"],
-            "Mordecai murmura algo ininteligible y te entrega el amuleto."
+            "Mordecai murmura algo ininteligible y te entrega el amuleto.\n+50 de Suerte (equipalo para activar el efecto)."
         )
     else:
         faltante = 10 - tiene

@@ -1,6 +1,5 @@
-# Saves del jugador: no van al repo, pero la carpeta debe existir
+__pycache__/
+*.pyc
 partidas/*
 !partidas/.gitkeep
-
-# Bytecode de Python
-__pycache__/
+.coverage

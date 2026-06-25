@@ -7,11 +7,11 @@ CLASES_DISPONIBLES = {
     
     'Guerrero': {
         'stats_base': {
-            'fuerza': 8,
-            'defensa': 40,
-            'agilidad': 20,
-            'suerte': 0,
-            'hp': 200,
+            'fuerza': 12,
+            'defensa': 45,
+            'agilidad': 15,
+            'suerte': 5,
+            'hp': 220,
             'mp': 30,
         },
         "habilidades": [
@@ -40,11 +40,11 @@ CLASES_DISPONIBLES = {
     },
     'Pirata': {
         'stats_base': {
-            'fuerza': 20,
-            'defensa': 20,
-            'agilidad': 30,
-            'suerte': 0,
-            'hp': 100,
+            'fuerza': 22,
+            'defensa': 22,
+            'agilidad': 35,
+            'suerte': 5,
+            'hp': 120,
             'mp': 80,
         },
         "habilidades": [
@@ -73,11 +73,11 @@ CLASES_DISPONIBLES = {
     },
     'Bufon': {
         'stats_base': {
-            'fuerza': 8,
-            'defensa': 70,
-            'agilidad': 80,
-            'suerte': 0,
-            'hp': 90,
+            'fuerza': 10,
+            'defensa': 25,
+            'agilidad': 75,
+            'suerte': 10,
+            'hp': 110,
             'mp': 70,
         },
         "habilidades": [
@@ -163,8 +163,6 @@ def crear_personaje(nombre, clase):
 def recibir_danio(personaje, cantidad, tipo):
     if tipo == "fisico":
         danio_final = cantidad - personaje["stats_base"]["defensa"]
-    elif tipo == "magico":
-        danio_final = cantidad - personaje["stats_base"]["espiritu"]
     else:
         danio_final = cantidad
 
@@ -216,21 +214,6 @@ def revivir(personaje):
     return True
 
 
-def aplicar_efecto_consumible(personaje, item):
-    if item["tipo"] != "consumible":
-        return None
-
-    efecto = item.get("efecto", {})
-    if "hp" in efecto:
-        curar(personaje, efecto["hp"])
-    if "mp" in efecto:
-        mp_max = personaje["stats_base"]["mp"]
-        personaje["stats_actuales"]["mp"] = min(
-            personaje["stats_actuales"]["mp"] + efecto["mp"], mp_max
-        )
-    return item
-
-
 def obtener_stats_con_equipamiento(personaje, items_equipados):
     stats_totales = personaje["stats_base"].copy()
     for item in items_equipados:
@@ -266,8 +249,6 @@ def mostrar_stats(personaje):
     stats_mostrar = [
         "fuerza",
         "defensa",
-        "magia",
-        "espiritu",
         "agilidad",
         "suerte",
     ]
@@ -277,7 +258,12 @@ def mostrar_stats(personaje):
     print(f"╚{linea}╝")
 
 
-def mostrar_seleccion_personaje():
+def mostrar_seleccion_personaje(progreso=None):
+    if progreso is not None and progreso.get("clase_oculta_desbloqueada"):
+        for personaje in PERSONAJES_SELECCIONABLES:
+            if personaje["clase"] == "Oculto":
+                personaje["bloqueado"] = False
+
     cursor = 0
 
     while True:
@@ -294,11 +280,20 @@ def mostrar_seleccion_personaje():
         print("╠════════════════════════════════════════════════════╣")
 
         personaje_actual = PERSONAJES_SELECCIONABLES[cursor]
+        no_jugable = (
+            personaje_actual["bloqueado"]
+            or personaje_actual["clase"] not in CLASES_DISPONIBLES
+        )
 
-        if personaje_actual["bloqueado"]:
-            print("║ Nombre: ???".ljust(53) + "║")
-            print("║ Clase : ???".ljust(53) + "║")
-            print("║ Este personaje permanece oculto...".ljust(53) + "║")
+        if no_jugable:
+            if personaje_actual["bloqueado"]:
+                print("║ Nombre: ???".ljust(53) + "║")
+                print("║ Clase : ???".ljust(53) + "║")
+                print("║ Este personaje permanece oculto...".ljust(53) + "║")
+            else:
+                print("║ Nombre: ???".ljust(53) + "║")
+                print("║ Clase : Oculto".ljust(53) + "║")
+                print("║ ¡Desbloqueado! Disponible próximamente.".ljust(53) + "║")
             print("╠════════════════════════════════════════════════════╣")
             print("║ HP:???  MP:???  FUE:???  DEF:???".ljust(53) + "║")
             print("║ MAG:???  ESP:???  AGI:???  SUE:???".ljust(53) + "║")
@@ -340,13 +335,20 @@ def mostrar_seleccion_personaje():
         elif tecla == "s":
             cursor = (cursor + 1) % len(PERSONAJES_SELECCIONABLES)
         elif tecla == "e":
-            if personaje_actual["bloqueado"]:
+            if no_jugable:
                 os.system("cls" if os.name == "nt" else "clear")
-                print("╔══════════════════════════════════════╗")
-                print("║      PERSONAJE AÚN BLOQUEADO         ║")
-                print("║   Debes cumplir una condición para   ║")
-                print("║         poder desbloquearlo.         ║")
-                print("╚══════════════════════════════════════╝")
+                if personaje_actual["bloqueado"]:
+                    print("╔══════════════════════════════════════╗")
+                    print("║      PERSONAJE AÚN BLOQUEADO         ║")
+                    print("║   Debes cumplir una condición para   ║")
+                    print("║         poder desbloquearlo.         ║")
+                    print("╚══════════════════════════════════════╝")
+                else:
+                    print("╔══════════════════════════════════════╗")
+                    print("║            PRÓXIMAMENTE              ║")
+                    print("║   Lo desbloqueaste, pero todavía no  ║")
+                    print("║        se puede jugar con él.        ║")
+                    print("╚══════════════════════════════════════╝")
                 print("\nPresiona cualquier tecla para continuar...")
                 msvcrt.getch()
             else:
@@ -399,8 +401,6 @@ def menu_personaje(personaje):
             stats = [
                 "fuerza",
                 "defensa",
-                "magia",
-                "espiritu",
                 "agilidad",
                 "suerte",
             ]

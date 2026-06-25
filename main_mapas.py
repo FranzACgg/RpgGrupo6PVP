@@ -30,7 +30,7 @@ def iniciar_mapas(contexto):
     mundo["mapa_actual"]    = mapa
     mundo["numero_mapa"]    = 1
     mundo["pos_p"]          = [1, c_centro]
-    mundo["simbolo_debajo"] = "░"
+    mundo["simbolo_debajo"] = " "   # espacio vacío — sin rastro al primer movimiento
     mundo["pasos_jugador"]  = 0
     mundo["dim_alto"]       = MAPA_REAL_ALTO
     mundo["dim_ancho"]      = MAPA_REAL_ANCHO
@@ -52,6 +52,12 @@ def iniciar_mapa(contexto):
             mover_enemigos(mundo["mapa_actual"], contexto)
 
         cambio_de_mapa(contexto)
+
+        # ── Disparar batalla del coliseo al entrar ────────────────────────────
+        if contexto["mundo"].get("coliseo_pendiente"):
+            contexto["mundo"]["coliseo_pendiente"] = False
+            from pantalla_batalla import iniciar_coliseo
+            iniciar_coliseo(contexto["mundo"]["mapa_actual"], contexto, obtener_tecla)
 
 
 if __name__ == "__main__":
