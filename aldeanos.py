@@ -162,6 +162,12 @@ ALDEANOS_MERCADO = [
             "La armadura perforada es lo que se usa ahora.",
         ],
     },
+    {
+        "id": "mercader",
+        "nombre": "Mercader",
+        "tipo": "comerciante",
+        "pos": None,
+    },
 ]
 
 # ─── Registro ─────────────────────────────────────────────────────────────────
@@ -365,6 +371,9 @@ def mostrar_dialogo(aldeano, inventario):
         _interactuar_slime(aldeano, inventario)
     elif tipo == "quest_goblin":
         _interactuar_goblin(aldeano, inventario)
+    elif tipo == "comerciante":
+        from dialogos_comercio import conversar_con_comerciante
+        conversar_con_comerciante(inventario)
     else:
         # Relleno: solo muestra los diálogos
         _mostrar_lineas(aldeano["nombre"], aldeano["dialogos"])

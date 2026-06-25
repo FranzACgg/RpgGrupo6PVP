@@ -1,0 +1,5 @@
+2;Pocion de HP pequeña;consumible;15
+3;Pocion de HP Grande;consumible;40
+1;Pocion de Fuerza Grande;consumible;50
+7;Escudo de Obsidiana;equipable;120
+5;Hacha de Mitril;equipable;150

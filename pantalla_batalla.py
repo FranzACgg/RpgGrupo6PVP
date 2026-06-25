@@ -12,6 +12,7 @@ from rich.align   import Align
 from config    import CAMARA_ALTO, CATALOGO_ITEMS, aplicar_efecto_consumible
 from entidades import STATS_ENEMIGOS, eliminar_enemigo
 from estados import VICTORIA, GAME_OVER
+from enemigos_dialogos import obtener_dialogo, ENCUENTRO, ATAQUE, DERROTA
 
 console = Console()
 
@@ -266,11 +267,15 @@ def _renderizar(datos_en, hp_enemigo, contexto, cursor, mensaje,
 
 # ─── Turno del mob ────────────────────────────────────────────────────────────
 
-def _turno_mob(datos, inventario, escudo_roto, personaje):
+def _turno_mob(datos, inventario, escudo_roto, personaje, tipo=None):
     totales, bonus = _stats_con_items(personaje, inventario, escudo_roto)
     defensa = totales.get("defensa", 0)
     agi_p   = totales.get("agilidad", 0)
     msgs    = []
+    if tipo:
+        frase = obtener_dialogo(tipo, ATAQUE)
+        if frase:
+            msgs.append(f"[italic]{datos['nombre']}: {frase}[/]")
 
     hab_usada = None
     for hab in datos["habilidades"]:
@@ -349,7 +354,7 @@ def _turno_mob(datos, inventario, escudo_roto, personaje):
 
 # ─── Loop de batalla (genérico) ───────────────────────────────────────────────
 
-def _loop_batalla(datos, hp_max, contexto, obtener_tecla_fn, etiqueta="ENEMIGO"):
+def _loop_batalla(datos, hp_max, contexto, obtener_tecla_fn, etiqueta="ENEMIGO", tipo=None):
     """
     Loop de combate reutilizable para cualquier tipo de enemigo.
     Devuelve True si el jugador ganó, False si murió/escapó.
@@ -359,6 +364,10 @@ def _loop_batalla(datos, hp_max, contexto, obtener_tecla_fn, etiqueta="ENEMIGO")
     hp_enemigo = hp_max
     cursor     = 0
     mensaje    = f"¡{datos['nombre']} aparece!"
+    if tipo:
+        frase = obtener_dialogo(tipo, ENCUENTRO)
+        if frase:
+            mensaje += f" [italic]{frase}[/]"
     escudo_roto = False
     modo       = "menu"
     cursor_sec = 0
@@ -393,7 +402,7 @@ def _loop_batalla(datos, hp_max, contexto, obtener_tecla_fn, etiqueta="ENEMIGO")
                                 mensaje = f"[bold]{hab['nombre']}[/] → {dano} daño."
                         else:
                             mensaje = f"{hab['nombre']} falló."
-                        msg_mob, escudo_roto = _turno_mob(datos, inventario, escudo_roto, personaje)
+                        msg_mob, escudo_roto = _turno_mob(datos, inventario, escudo_roto, personaje, tipo)
                         mensaje += " | " + msg_mob
                         modo = "menu"
             elif t in ('q', '\x1b'):
@@ -436,7 +445,7 @@ def _loop_batalla(datos, hp_max, contexto, obtener_tecla_fn, etiqueta="ENEMIGO")
                     else:
                         hp_enemigo -= dano_j
                         mensaje = f"⚔ Ataque físico: hiciste {dano_j} daño."
-                    msg_mob, escudo_roto = _turno_mob(datos, inventario, escudo_roto, personaje)
+                    msg_mob, escudo_roto = _turno_mob(datos, inventario, escudo_roto, personaje, tipo)
                     mensaje += " | " + msg_mob
 
                 elif accion == 1:
@@ -457,14 +466,19 @@ def _loop_batalla(datos, hp_max, contexto, obtener_tecla_fn, etiqueta="ENEMIGO")
                         return False
                     else:
                         mensaje = "No pudiste escapar..."
-                        msg_mob, escudo_roto = _turno_mob(datos, inventario, escudo_roto, personaje)
+                        msg_mob, escudo_roto = _turno_mob(datos, inventario, escudo_roto, personaje, tipo)
                         mensaje += " | " + msg_mob
 
         hp_enemigo = max(0, hp_enemigo)
 
         if hp_enemigo <= 0:
-            _renderizar(datos, 0, contexto, cursor,
-                        f"[bold green]¡Derrotaste a {datos['nombre']}! Presioná una tecla.[/]",
+            msg_fin = f"[bold green]¡Derrotaste a {datos['nombre']}![/]"
+            if tipo:
+                frase = obtener_dialogo(tipo, DERROTA)
+                if frase:
+                    msg_fin += f" [italic]{frase}[/]"
+            msg_fin += " [bold green]Presioná una tecla.[/]"
+            _renderizar(datos, 0, contexto, cursor, msg_fin,
                         "menu", 0, escudo_roto, etiqueta)
             obtener_tecla_fn()
             return True
@@ -514,7 +528,7 @@ def iniciar_batalla(enemigo_dict, mapa, contexto, obtener_tecla_fn):
     datos    = STATS_ENEMIGOS[tipo_mob]
     hp_max   = datos["hp_max"]
 
-    gano = _loop_batalla(datos, hp_max, contexto, obtener_tecla_fn)
+    gano = _loop_batalla(datos, hp_max, contexto, obtener_tecla_fn, tipo=tipo_mob)
 
     if gano:
         eliminar_enemigo(enemigo_dict, mapa, contexto)
